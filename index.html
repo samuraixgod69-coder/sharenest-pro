@@ -43,7 +43,6 @@ h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:
 .files.list .file{display:flex}.files.list .thumb{width:180px;min-width:180px;height:120px}.files.list .file-info{flex:1}
 .thumb{height:180px;background:var(--thumb);display:grid;place-items:center;font-size:65px;position:relative;cursor:pointer;overflow:hidden}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.play{position:absolute;left:12px;bottom:12px;background:#000a;color:#fff;border-radius:99px;padding:4px 9px;font-size:13px}
 .more{position:absolute;right:12px;top:12px;width:40px;height:40px;border:0;border-radius:13px;background:#15162bd9;color:#fff;font-size:22px;z-index:5}
 .file-info{padding:18px;min-width:0}.file-info h3{font-size:17px;word-break:break-word;cursor:pointer}.file-info p{color:var(--muted2);margin-top:7px}
 .tags{margin-top:6px;font-size:12px;color:var(--muted2);word-break:break-word}
@@ -586,9 +585,7 @@ async function destroyFile(id){
   if(!needOwner())return;
   const f=recOf(id);if(!f)return;
   if(!confirm('Delete permanently?'))return;
-  try{if(f.path)await supabase.storage.from('sharenest-files').remove([f.path]);}catch(e){}
-  DB.files=DB.files.filter(x=>x.id!==id);
-  await saveCloudData();await refresh();toast('🗑️ Deleted permanently');
+  try{if(f.path)await supabase.storage.from('sharenest-files').remove([f.path]);DB.files=DB.files.filter(x=>x.id!==id);await saveCloudData();await refresh();toast('🗑️ Deleted permanently');}catch(e){toast('Delete failed');}
 }
 async function emptyTrash(){
   if(!needOwner())return;
@@ -696,5 +693,4 @@ fetchCloudData();
 </script>
 </body>
 </html>
-o
 
