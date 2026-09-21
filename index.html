@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ShareNest Pro — Global Cloud Sync</title>
-<!-- Supabase CDN -->
+<!-- Supabase CDN (loaded once) -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{color-scheme:dark;--bg:#060714;--text:#f7f8ff;--muted:#8d91ad;--muted2:#777b99;--card:#17182f;--tile:#1b1c3abc;--tile-h:#27284e;--input:#24244b;--input-b:#3a3b61;--line:#ffffff14;--line2:#4b4d78;--soft:#ffffff14;--thumb:#29294a;--accent:#8e8dff;--side:#08091db3;--pop:#171832;--pop-b:#484975;--hero:linear-gradient(110deg,#39367085,#2c275b59);--app:radial-gradient(circle at 55% 5%,#25204f 0,#0d0f28 34%,#040510 75%);--sideact:linear-gradient(145deg,#31356c,#20234c);--overlay:#0009;--pageview:rgba(3,5,18,.97);--danger:#ff6b81}
@@ -54,7 +54,7 @@ h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:
 .box{width:min(550px,100%);max-height:90vh;overflow:auto;padding:28px;border-radius:25px;background:var(--pop);border:1px solid var(--pop-b);box-shadow:0 25px 80px #0006}
 .box h2{margin-bottom:18px}.drop{border:2px dashed #7169ff;border-radius:20px;padding:35px;text-align:center;color:var(--muted)}
 .form-input,.form-select{width:100%;padding:15px;border-radius:14px;border:1px solid var(--pop-b);background:var(--input);color:var(--text);outline:none;margin:8px 0 14px}
-.toast{position:fixed;right:20px;bottom:20px;background:var(--pop);color:var(--text);border:1px solid var(--pop-b);padding:14px 18px;border-radius:14px;opacity:0;transform:translateY(20px);transition:.25s;z-index:80;pointer-events:none;max-width:calc(100% - 40px)}.toast.show{opacity:1;transform:translateY(0)}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--pop);color:var(--text);border:1px solid var(--pop-b);padding:14px 18px;border-radius:14px;opacity:0;transform:translateY(20px);transition:.25s;z-index:200;pointer-events:none;max-width:calc(100% - 40px)}.toast.show{opacity:1;transform:translateY(0)}
 .password-icon{font-size:55px;text-align:center;margin-bottom:12px}.password-error{display:none;color:var(--danger);font-size:14px;margin:-5px 0 12px}
 .cancel-btn{background:none;border:0;color:var(--accent);margin-top:15px;padding:8px}
 .owner-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;background:var(--soft);color:var(--muted);font-size:13px}
@@ -181,7 +181,6 @@ h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:
 <div class="notice">Current mode: <b id="settingsMode">Viewer</b></div>
 <button class="primary" style="width:100%;margin-bottom:10px" onclick="unlockOwner()">🔐 Owner sign-in</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="lockOwner()">🔒 Lock</button>
-<button class="secondary" style="width:100%;margin-bottom:10px" onclick="changePassword()">🔑 Change passcode</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="exportDataBackup()">💾 Export backup (JSON)</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="emptyTrash()">🧹 Empty trash</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="toggleTheme()">🌗 Switch theme</button>
@@ -193,14 +192,16 @@ h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:
 <div id="previewModal" class="modal"><div class="box" id="previewBox" style="max-width:750px"></div></div>
 <div id="toast" class="toast"></div>
 
-<!-- Supabase JS Client -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 /* ================= SUPABASE CONFIG ================= */
 const SUPABASE_URL = 'https://lahnustwkknopcfbqwqp.supabase.co';
-const SUPABASE_KEY = 'Sb_publishable_Q1dDN09bCcYaerXxefwbmA_6Icam4qe';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_KEY = 'Sb_publishable_Q1dDN09bCcYaerXxefwbmA_6Icam4qe'; // ⚠️ verify exact casing in Supabase dashboard (usually starts with lowercase "sb_publishable_")
+let sb = null;
+try{
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+}catch(e){
+  console.error('Supabase init failed:', e);
+}
 
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -237,40 +238,49 @@ function toast(msg){
   clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),2800);
 }
 function needOwner(){if(!S.owner){toast('🔒 Owner sign-in required');return false}return true}
-async function run(fn){try{await fn()}catch(e){toast('⚠️ '+(e&&e.message?e.message:'Something went wrong'))}}
+async function run(fn){try{await fn()}catch(e){console.error(e);toast('⚠️ '+(e&&e.message?e.message:'Something went wrong'))}}
 function cleanName(v){return String(v||'').replace(/[\x00-\x1f\\/]/g,'_').trim().slice(0,200)}
 
 /* ================= CLOUD SYNC ================= */
 async function fetchCloudData(){
+  if(!sb){toast('⚠️ Cloud connection failed. Check Supabase script/key.');loaded=true;await refresh();return;}
   try{
-    const {data, error}=await supabase.from('sharenest_data').select('*').eq('id', 1).single();
-    if(!error && data){
+    const {data, error}=await sb.from('sharenest_data').select('*').eq('id', 1).maybeSingle();
+    if(error){
+      console.error('Fetch error:',error);
+      toast('⚠️ Cloud error: '+error.message);
+    }else if(data){
       DB.files=data.files||[];
-      DB.folders=data.folders||[...DEFAULT_FOLDERS];
+      DB.folders=(data.folders&&data.folders.length)?data.folders:[...DEFAULT_FOLDERS];
       DB.logs=data.logs||[];
-      DB.pass=data.pass||null;
-    } else {
-      await supabase.from('sharenest_data').upsert({id:1, files:[], folders:[...DEFAULT_FOLDERS], logs:[], pass:null});
+    }else{
+      // no row yet: create it
+      const {error:upErr}=await sb.from('sharenest_data').upsert({id:1, files:[], folders:[...DEFAULT_FOLDERS], logs:[], pass:null});
+      if(upErr){console.error(upErr);toast('⚠️ Could not create cloud row: '+upErr.message);}
     }
-  }catch(e){console.error(e);}
+  }catch(e){console.error(e);toast('⚠️ Cannot reach cloud');}
   loaded=true; await refresh();
 }
 
 async function saveCloudData(){
-  try{
-    await supabase.from('sharenest_data').upsert({
-      id: 1,
-      files: DB.files,
-      folders: DB.folders,
-      logs: DB.logs,
-      pass: DB.pass
-    });
-  }catch(e){console.error(e);}
+  if(!sb)throw new Error('Cloud not connected');
+  const {error}=await sb.from('sharenest_data').upsert({
+    id: 1,
+    files: DB.files,
+    folders: DB.folders,
+    logs: DB.logs,
+    pass: null
+  });
+  if(error){
+    console.error('Save error:',error);
+    toast('⚠️ Save failed: '+error.message);
+    throw new Error(error.message);
+  }
 }
 
 function logAct(text){
   DB.logs.unshift({t:now(),text});DB.logs=DB.logs.slice(0,100);
-  saveCloudData();
+  saveCloudData().catch(()=>{});
 }
 
 async function updateStorage(){
@@ -279,120 +289,69 @@ async function updateStorage(){
   updateCounts();
 }
 
-/* ================= PASSCODE ================= */
-const K=[],H0=[];
-(function(){let n=2,c=0;while(c<64){let p=true;for(let i=2;i*i<=n;i++)if(n%i===0){p=false;break}if(p){if(c<8)H0[c]=(Math.pow(n,.5)%1)*4294967296|0;K[c]=(Math.pow(n,1/3)%1)*4294967296|0;c++}n++}})();
-function sha256(msg){
-  const b=new TextEncoder().encode(msg),l=b.length,w=[];
-  for(let i=0;i<l;i++)w[i>>2]|=b[i]<<(24-8*(i&3));
-  w[l>>2]|=0x80<<(24-8*(l&3));
-  const n=(((l+8)>>6)+1)*16;w[n-1]=l*8;
-  const h=H0.slice(),x=new Array(64);
-  for(let o=0;o<n;o+=16){
-    for(let i=0;i<64;i++){
-      if(i<16)x[i]=w[o+i]|0;
-      else{const a=x[i-15],c=x[i-2];x[i]=(x[i-16]+(((a>>>7)|(a<<25))^((a>>>18)|(a<<14))^(a>>>3))+x[i-7]+(((c>>>17)|(c<<15))^((c>>>19)|(c<<13))^(c>>>10)))|0}
-    }
-    let a=h[0],b2=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
-    for(let i=0;i<64;i++){
-      const t1=(hh+(((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)))+((e&f)^(~e&g))+K[i]+x[i])|0;
-      const t2=((((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)))+((a&b2)^(a&c)^(b2&c)))|0;
-      hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0;
-    }
-    h[0]=(h[0]+a)|0;h[1]=(h[1]+b2)|0;h[2]=(h[2]+c)|0;h[3]=(h[3]+d)|0;h[4]=(h[4]+e)|0;h[5]=(h[5]+f)|0;h[6]=(h[6]+g)|0;h[7]=(h[7]+hh)|0;
-  }
-  return h.map(v=>(v>>>0).toString(16).padStart(8,'0')).join('');
-}
+/* ================= OWNER PASSWORD (single fixed password) ================= */
+/* Only the hash is stored here (never the plain password). Nobody can create or change it from the app. */
+const OWNER_SALT='7d9ba479f9d4f1c3fba5c23dbbcc90b5';
+const OWNER_HASH='55ffafd0bd22b7b2b4c0a26d81a4044668626dd8eba9128fee36d6addbfc5afd';
 const hex=u8=>[...u8].map(b=>b.toString(16).padStart(2,'0')).join('');
 const unhex=s=>new Uint8Array(s.match(/../g).map(h=>parseInt(h,16)));
-const randHex=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return hex(a)};
-async function derive(secret,saltHex,alg){
-  if(alg==='pbkdf2'&&window.crypto&&crypto.subtle){
-    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
-    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:150000},key,256);
-    return hex(new Uint8Array(bits));
-  }
-  let h=sha256(saltHex+secret);
-  for(let i=0;i<20000;i++)h=sha256(h+saltHex);
-  return h;
-}
-const normRec=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-function genRecovery(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(16);crypto.getRandomValues(a);
-  return [...a].map(v=>chars[v%chars.length]).join('').match(/.{4}/g).join('-');
-}
-async function makePass(pw,rec){
-  const alg=(window.crypto&&crypto.subtle)?'pbkdf2':'sha',salt=randHex(16),rsalt=randHex(16);
-  return {alg,salt,hash:await derive(pw,salt,alg),rsalt,rhash:await derive(normRec(rec),rsalt,alg)};
+async function deriveOwner(secret){
+  if(!(window.crypto&&crypto.subtle))throw new Error('Secure context required (use https)');
+  const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
+  const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(OWNER_SALT),iterations:150000},key,256);
+  return hex(new Uint8Array(bits));
 }
 const sameHash=(a,b)=>a.length===b.length&&[...a].every((c,i)=>c===b[i]);
 
 function authError(msg){const p=$('passwordError');if(!p)return;p.textContent='❌ '+msg;p.style.display='block'}
-function showPassword(mode){
-  mode=mode||(DB.pass?'login':'setup');
-  const pw=(id,ph,ac)=>'<input id="'+id+'" class="form-input" type="password" placeholder="'+ph+'" autocomplete="'+ac+'">';
-  let h='';
-  if(mode==='setup'){
-    h='<div class="password-icon">🔐</div><h2 style="text-align:center">Create Passcode</h2>'+pw('pwNew','New passcode (min 6 chars)','new-password')+pw('pwNew2','Repeat passcode','new-password')+'<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dosetup">Create passcode</button>';
-  }else if(mode==='recover'){
-    h='<div class="password-icon">🛟</div><h2 style="text-align:center">Reset Passcode</h2><input id="recCode" class="form-input" type="text" placeholder="Recovery Code">'+pw('pwNew','New passcode','new-password')+'<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dorecover">Reset</button>';
-  }else{
-    h='<div class="password-icon">🔐</div><h2 style="text-align:center">Owner Sign-In</h2><input id="uploadPassword" class="form-input" type="password" placeholder="Passcode"><div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dologin">🔓 Unlock</button><button class="cancel-btn" style="width:100%;margin-top:10px" data-act="forgot">Forgot?</button>';
-  }
-  h+='<button class="cancel-btn" style="width:100%" onclick="closePassword()">Cancel</button>';
-  $('authBox').innerHTML=h;$('passwordModal').classList.add('show');
+function showPassword(){
+  $('authBox').innerHTML='<div class="password-icon">🔐</div><h2 style="text-align:center">Owner Password</h2><input id="uploadPassword" class="form-input" type="password" placeholder="Enter password" autocomplete="current-password"><div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dologin">🔓 Unlock</button><button class="cancel-btn" style="width:100%" onclick="closePassword()">Cancel</button>';
+  $('passwordModal').classList.add('show');
+  setTimeout(()=>{const i=$('uploadPassword');if(i)i.focus()},50);
 }
 function closePassword(){$('passwordModal').classList.remove('show');$('authBox').innerHTML=''}
 async function unlockNow(){S.owner=true;resetAutoLock();await refresh();toast('👑 Signed in');}
-async function doSetup(){
-  const a=$('pwNew').value,b=$('pwNew2').value;
-  if(a.length<6)return authError('Min 6 characters required');
-  if(a!==b)return authError('Passcodes do not match');
-  const rec=genRecovery();
-  DB.pass=await makePass(a,rec);await saveCloudData();
-  closePassword();await unlockNow();
-  openDialog('<h2>🛟 Recovery Code</h2><div class="code">'+esc(rec)+'</div><button class="primary" style="width:100%" onclick="closeDialog()">I Saved It</button>');
-}
-async function doRecover(){
-  const code=$('recCode').value,a=$('pwNew').value;
-  if(a.length<6)return authError('Min 6 characters');
-  const h=await derive(normRec(code),DB.pass.rsalt,DB.pass.alg);
-  if(!sameHash(h,DB.pass.rhash))return authError('Incorrect recovery code');
-  const rec=genRecovery();
-  DB.pass=await makePass(a,rec);await saveCloudData();
-  closePassword();await unlockNow();
-}
 async function checkOwnerPassword(){
   const pw=$('uploadPassword').value;
-  if(!pw)return;
-  const h=await derive(pw,DB.pass.salt,DB.pass.alg);
-  if(sameHash(h,DB.pass.hash)){
+  if(!pw)return authError('Enter the password');
+  const h=await deriveOwner(pw);
+  if(sameHash(h,OWNER_HASH)){
     closePassword();await unlockNow();
     const cb=afterLogin;afterLogin=null;if(cb)cb();
-  }else{authError('Incorrect passcode');}
+  }else{authError('Wrong password');}
 }
 function openUpload(){
-  if(!DB.pass){showPassword('setup');return;}
-  if(!S.owner){afterLogin=openUploadModal;showPassword('login');return;}
+  if(!S.owner){afterLogin=openUploadModal;showPassword();return;}
   openUploadModal();
 }
-function unlockOwner(){closeSettings();afterLogin=null;showPassword('login')}
+function unlockOwner(){closeSettings();afterLogin=null;showPassword()}
 function resetAutoLock(){clearTimeout(lockTimer);if(S.owner)lockTimer=setTimeout(()=>doLock(true),AUTOLOCK_MS)}
 function doLock(auto){S.owner=false;closePassword();refresh();toast(auto?'🔒 Auto-locked':'🔒 Locked');}
 function lockOwner(){doLock(false)}
-function changePassword(){
+
+/* ================= SETTINGS / BACKUP / ERASE ================= */
+function openSettings(){updateMode();$('settingsModal').classList.add('show')}
+function closeSettings(){$('settingsModal').classList.remove('show')}
+function exportDataBackup(){
   if(!needOwner())return;
-  closeSettings();
-  openDialog('<h2>🔑 Change Passcode</h2><input id="cpOld" class="form-input" type="password" placeholder="Current passcode"><input id="cpNew" class="form-input" type="password" placeholder="New passcode"><input id="cpNew2" class="form-input" type="password" placeholder="Repeat new passcode"><button class="primary" style="width:100%" data-act="dochpw">Save</button><button class="cancel-btn" style="width:100%" onclick="closeDialog()">Cancel</button>');
+  const data={files:DB.files,folders:DB.folders,logs:DB.logs,exported_at:new Date().toISOString()};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='sharenest-backup-'+Date.now()+'.json';
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('💾 Backup exported');
 }
-async function doChangePassword(){
-  const o=$('cpOld').value,n=$('cpNew').value,n2=$('cpNew2').value;
-  const h=await derive(o,DB.pass.salt,DB.pass.alg);
-  if(!sameHash(h,DB.pass.hash)){toast('❌ Incorrect current passcode');return;}
-  if(n.length<6){toast('❌ Min 6 characters');return;}
-  if(n!==n2){toast('❌ Passcodes do not match');return;}
-  DB.pass=await makePass(n,genRecovery());
-  await saveCloudData();closeDialog();toast('🔑 Passcode updated');
+async function eraseEverything(){
+  if(!needOwner())return;
+  if(!confirm('Erase ALL files, folders and logs? This cannot be undone.'))return;
+  if(!confirm('Really erase everything?'))return;
+  const paths=DB.files.map(f=>f.path).filter(Boolean);
+  try{
+    if(paths.length&&sb)await sb.storage.from('sharenest-files').remove(paths);
+  }catch(e){console.error(e);}
+  DB.files=[];DB.folders=[...DEFAULT_FOLDERS];DB.logs=[];
+  await saveCloudData();closeSettings();await refresh();toast('⚠️ All data erased');
 }
 
 /* ================= RENDERING ================= */
@@ -440,7 +399,7 @@ function iconFor(f){
   return '📄';
 }
 function thumbHtml(f){
-  if(f.url && f.type && f.type.startsWith('image/')) return '<img loading="lazy" src="'+f.url+'">';
+  if(f.url && f.type && f.type.startsWith('image/')) return '<img loading="lazy" src="'+esc(f.url)+'">';
   return '<span>'+iconFor(f)+'</span>';
 }
 function fileCard(f){
@@ -450,18 +409,20 @@ function fileCard(f){
     '<div class="file-info">'+
       '<h3 onclick="previewFile(\''+id+'\')">'+esc(f.name)+'</h3>'+
       '<p>'+formatBytes(f.size)+' • 🌐 Public</p>'+
+      ((f.tags&&f.tags.length)?'<div class="tags">🏷️ '+esc(f.tags.join(', '))+'</div>':'')+
       '<div class="file-bottom"><span>'+esc(f.folder||'Files')+'</span><button class="star '+(f.star?'on':'')+'" onclick="toggleStar(\''+id+'\')">'+(f.star?'★':'☆')+'</button></div>'+
       '<div class="file-actions">'+
-        '<a class="mini" href="'+f.url+'" target="_blank" download style="text-decoration:none">⬇️ Download</a>'+
+        '<a class="mini" href="'+esc(f.url)+'" target="_blank" rel="noopener" download="'+esc(f.name)+'" style="text-decoration:none">⬇️ Download</a>'+
         '<button class="mini" onclick="shareFile(\''+id+'\')">📤 Share</button>'+
         '<button class="mini" onclick="details(\''+id+'\')">ℹ️ Info</button>'+
       '</div>'+
     '</div></article>';
 }
+/* folder names go through data attributes (safe for quotes / apostrophes) */
 function folderCard(name){
   const n=S.files.filter(x=>x.folder===name).length;
-  const manage=S.owner?'<span class="fmanage"><button class="mini" onclick="renameFolder(\''+esc(name)+'\')">✏️</button><button class="mini" onclick="deleteFolder(\''+esc(name)+'\')">🗑️</button></span>':'';
-  return '<div class="folder" onclick="openFolder(\''+esc(name)+'\')"><div class="folder-icon">📁</div><div style="flex:1;min-width:0"><h3>'+esc(name)+'</h3><small>'+n+' items</small></div>'+manage+'</div>';
+  const manage=S.owner?'<span class="fmanage"><button class="mini" data-fact="rename" data-fname="'+esc(name)+'">✏️</button><button class="mini" data-fact="delete" data-fname="'+esc(name)+'">🗑️</button></span>':'';
+  return '<div class="folder" data-fact="open" data-fname="'+esc(name)+'"><div class="folder-icon">📁</div><div style="flex:1;min-width:0"><h3>'+esc(name)+'</h3><small>'+n+' items</small></div>'+manage+'</div>';
 }
 function renderFolders(){
   const fc=$('foldersContainer');if(fc) fc.innerHTML=S.folders.length?S.folders.map(folderCard).join(''):'<div class="empty">No folders.</div>';
@@ -499,16 +460,26 @@ function openUploadModal(){
 }
 function closeUpload(){$('uploadModal').classList.remove('show')}
 
+/* storage-safe file key: no spaces / special chars */
+function safeKey(name){
+  const dot=name.lastIndexOf('.');
+  const base=(dot>0?name.slice(0,dot):name).normalize('NFKD').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'').slice(0,80)||'file';
+  const ext=dot>0?name.slice(dot+1).replace(/[^\w]/g,'').slice(0,10):'';
+  return base+(ext?'.'+ext:'');
+}
+
 async function addFiles(fileList){
   if(!needOwner())return;
   const filesArr=[...fileList];
   if(!filesArr.length)return;
+  if(!sb){toast('⚠️ Cloud not connected');return;}
   if(uploading){toast('⏳ Upload running');return;}
   uploading=true;
   const folder=$('uploadFolderSelect').value||DB.folders[0];
   const tags=$('uploadTagsInput').value.split(',').map(t=>t.trim()).filter(Boolean);
   const q=$('uploadQueue');
   let ok=0;
+  resetAutoLock();
 
   for(const file of filesArr){
     const row=document.createElement('div');row.className='uprow';
@@ -517,11 +488,12 @@ async function addFiles(fileList){
     const bar=row.querySelector('.progress'),stat=row.querySelector('.upstat');
 
     try{
-      const filePath='public/'+Date.now()+'_'+file.name;
-      const {error:stErr}=await supabase.storage.from('sharenest-files').upload(filePath, file);
+      const filePath='public/'+Date.now()+'_'+safeKey(file.name);
+      const {error:stErr}=await sb.storage.from('sharenest-files').upload(filePath, file, {contentType:file.type||undefined});
       if(stErr) throw new Error(stErr.message);
 
-      const {data:{publicUrl}}=supabase.storage.from('sharenest-files').getPublicUrl(filePath);
+      const {data:pub}=sb.storage.from('sharenest-files').getPublicUrl(filePath);
+      const publicUrl=pub.publicUrl;
 
       const rec={
         id:uid(),
@@ -538,7 +510,8 @@ async function addFiles(fileList){
       bar.classList.remove('ind');bar.firstChild.style.width='100%';stat.textContent='✅ Saved';ok++;
       logAct('Uploaded: '+rec.name);
     }catch(e){
-      bar.classList.remove('ind');stat.textContent='❌ Failed';stat.classList.add('bad');
+      console.error(e);
+      bar.classList.remove('ind');stat.textContent='❌ Failed: '+(e&&e.message?e.message:'error');stat.classList.add('bad');
     }
   }
   uploading=false;$('picker').value='';
@@ -546,20 +519,31 @@ async function addFiles(fileList){
   if(ok) toast('✅ '+ok+' file(s) uploaded');
 }
 
+/* drag & drop */
+(function(){
+  const d=$('drop');if(!d)return;
+  ['dragenter','dragover'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.style.borderColor='var(--accent)'}));
+  ['dragleave','drop'].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.style.borderColor='#7169ff'}));
+  d.addEventListener('drop',e=>{if(e.dataTransfer&&e.dataTransfer.files)run(()=>addFiles(e.dataTransfer.files))});
+})();
+
 /* ================= ACTIONS ================= */
 async function shareFile(id){
   const f=byId(id);if(!f)return;
   if(navigator.share){try{await navigator.share({title:f.name,url:f.url})}catch(e){}}
-  else{prompt('Link:', f.url);}
+  else{
+    try{await navigator.clipboard.writeText(f.url);toast('🔗 Link copied');}
+    catch(e){prompt('Link:', f.url);}
+  }
 }
 function closePreview(){$('previewModal').classList.remove('show');$('previewBox').innerHTML='';}
 async function previewFile(id){
   const f=byId(id);if(!f)return;
   const t=f.type||'';let c='';
-  if(t.startsWith('image/')) c='<img src="'+f.url+'">';
-  else if(t.startsWith('video/')) c='<video controls autoplay src="'+f.url+'"></video>';
-  else if(t.startsWith('audio/')) c='<audio controls autoplay style="width:100%" src="'+f.url+'"></audio>';
-  else c='<div style="padding:30px">No preview available.</div>';
+  if(t.startsWith('image/')) c='<img src="'+esc(f.url)+'">';
+  else if(t.startsWith('video/')) c='<video controls autoplay src="'+esc(f.url)+'"></video>';
+  else if(t.startsWith('audio/')) c='<audio controls autoplay style="width:100%" src="'+esc(f.url)+'"></audio>';
+  else c='<div style="padding:30px">No preview available.<br><br><a class="mini" href="'+esc(f.url)+'" target="_blank" rel="noopener" style="text-decoration:none">Open file</a></div>';
 
   $('previewBox').innerHTML='<h2>👁️ '+esc(f.name)+'</h2><div class="preview-container">'+c+'</div><button class="secondary" style="width:100%;margin-top:16px" onclick="closePreview()">Close</button>';
   $('previewModal').classList.add('show');
@@ -585,19 +569,25 @@ async function destroyFile(id){
   if(!needOwner())return;
   const f=recOf(id);if(!f)return;
   if(!confirm('Delete permanently?'))return;
-  try{if(f.path)await supabase.storage.from('sharenest-files').remove([f.path]);DB.files=DB.files.filter(x=>x.id!==id);await saveCloudData();await refresh();toast('🗑️ Deleted permanently');}catch(e){toast('Delete failed');}
+  try{
+    if(f.path&&sb)await sb.storage.from('sharenest-files').remove([f.path]);
+    DB.files=DB.files.filter(x=>x.id!==id);
+    await saveCloudData();await refresh();toast('🗑️ Deleted permanently');
+  }catch(e){toast('Delete failed');}
 }
 async function emptyTrash(){
   if(!needOwner())return;
   const trashItems=DB.files.filter(f=>f.trashed_at);
   if(!trashItems.length){toast('Trash empty');return;}
   if(!confirm('Empty trash?'))return;
+  const paths=trashItems.map(f=>f.path).filter(Boolean);
+  try{if(paths.length&&sb)await sb.storage.from('sharenest-files').remove(paths);}catch(e){console.error(e);}
   DB.files=DB.files.filter(f=>!f.trashed_at);
   await saveCloudData();closeSettings();await refresh();toast('🧹 Trash emptied');
 }
 function details(id){
   const f=byId(id);if(!f)return;
-  openDialog('<h2>ℹ️ Details</h2><div class="notice"><b>'+esc(f.name)+'</b><br><br>Size: '+formatBytes(f.size)+'<br>Folder: '+esc(f.folder)+'</div><button class="secondary" style="width:100%" onclick="closeDialog()">Close</button>');
+  openDialog('<h2>ℹ️ Details</h2><div class="notice"><b>'+esc(f.name)+'</b><br><br>Size: '+formatBytes(f.size)+'<br>Type: '+esc(f.type||'—')+'<br>Folder: '+esc(f.folder)+'<br>Uploaded: '+esc(fmtDate(f.uploaded_at))+'</div><button class="secondary" style="width:100%" onclick="closeDialog()">Close</button>');
 }
 
 /* ================= FOLDERS & PAGES ================= */
@@ -610,7 +600,7 @@ async function createFolder(){
 }
 async function renameFolder(name){
   if(!needOwner())return;
-  const n=prompt('New folder name:',name);
+  const n=(prompt('New folder name:',name)||'').trim();
   if(!n||DB.folders.includes(n))return;
   DB.folders[DB.folders.indexOf(name)]=n;
   DB.files.forEach(f=>{if(f.folder===name)f.folder=n;});
@@ -619,6 +609,7 @@ async function renameFolder(name){
 async function deleteFolder(name){
   if(!needOwner())return;
   if(DB.folders.length<2){toast('Keep at least one folder');return;}
+  if(!confirm('Delete folder "'+name+'"? Files inside stay in cloud but lose their folder.'))return;
   DB.folders=DB.folders.filter(x=>x!==name);
   await saveCloudData();refresh();toast('🗑️ Deleted');
 }
@@ -642,7 +633,7 @@ function showPage(page){
   else if(page==='favorites'){title='⭐ Favorites';body=makeCards(S.files.filter(f=>f.star))}
   else if(page==='recent'){title='🕘 Recent';body=makeCards(S.files)}
   else if(page==='trash'){title='🗑️ Trash';body=S.owner?makeTrashCards():'<div class="empty">🔒 Owner only</div>'}
-  else if(page==='activity'){title='📋 Activity';body=S.owner?'<div class="notice">'+DB.logs.map(l=>esc(l.text)).join('<br>')+'</div>':'<div class="empty">🔒 Owner only</div>'}
+  else if(page==='activity'){title='📋 Activity';body=S.owner?'<div class="notice">'+(DB.logs.length?DB.logs.map(l=>esc(fmtDate(l.t))+' — '+esc(l.text)).join('<br>'):'No activity yet.')+'</div>':'<div class="empty">🔒 Owner only</div>'}
   else if(page.startsWith('folder:')){const name=page.slice(7);title='📁 '+esc(name);body=makeCards(S.files.filter(f=>f.folder===name))}
   $('pageContent').innerHTML='<h1>'+title+'</h1><p class="subtitle">'+sub+'</p><div style="margin-top:30px">'+body+'</div>';
 }
@@ -664,6 +655,7 @@ function showAll(){$('search').value='';query='';render();navigate('recent')}
 function openDialog(html){$('dialogBox').innerHTML=html;$('dialogModal').classList.add('show')}
 function closeDialog(){$('dialogModal').classList.remove('show');}
 function fileMenu(id,btn){
+  closeMenu();
   const f=byId(id);if(!f)return;
   const m=document.createElement('div');m.className='menu';
   m.innerHTML='<button onclick="previewFile(\''+id+'\');closeMenu()">👁️ Preview</button><button onclick="shareFile(\''+id+'\');closeMenu()">📤 Share</button>'+(S.owner?'<button onclick="deleteFile(\''+id+'\');closeMenu()">🗑️ Trash</button>':'');
@@ -672,22 +664,69 @@ function fileMenu(id,btn){
   m.style.left=Math.max(8,r.right-180)+'px';m.style.top=(r.bottom+6)+'px';
 }
 function closeMenu(){document.querySelectorAll('.menu').forEach(m=>m.remove());}
-document.addEventListener('click',e=>{if(!e.target.closest('.menu')&&!e.target.classList.contains('more'))closeMenu();});
+
+/* ================= GLOBAL EVENT HANDLERS ================= */
+/* ✅ FIX: auth / dialog buttons use data-act; this handler wires them up */
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.menu')&&!e.target.classList.contains('more'))closeMenu();
+
+  const b=e.target.closest('[data-act]');
+  if(b){
+    const a=b.dataset.act;
+    if(a==='dologin')run(checkOwnerPassword);
+    return;
+  }
+
+  const fb=e.target.closest('[data-fact]');
+  if(fb){
+    e.stopPropagation();
+    const act=fb.dataset.fact,name=fb.dataset.fname;
+    if(act==='open')openFolder(name);
+    else if(act==='rename')run(()=>renameFolder(name));
+    else if(act==='delete')run(()=>deleteFolder(name));
+  }
+});
+
+/* Enter key submits auth forms & new-folder input */
+document.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    if($('passwordModal').classList.contains('show')){
+      const btn=$('authBox').querySelector('[data-act]');
+      if(btn){e.preventDefault();btn.click();}
+    }else if($('folderModal').classList.contains('show')){
+      e.preventDefault();run(createFolder);
+    }
+  }
+  if(e.key==='Escape'){
+    CLOSABLE.forEach(id=>$(id).classList.remove('show'));
+    closeMenu();
+  }
+});
+
+/* keep owner session alive while active */
+['click','keydown','touchstart'].forEach(ev=>document.addEventListener(ev,()=>{if(S.owner)resetAutoLock()},{passive:true}));
+
+/* close modals by tapping the dark backdrop */
+CLOSABLE.forEach(id=>{
+  const m=$(id);
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')});
+});
 
 /* Global real-time listener */
 try{
-  supabase.channel('public:sharenest_data')
-    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sharenest_data' }, payload => {
-      if(payload.new){
-        DB.files=payload.new.files||[];
-        DB.folders=payload.new.folders||[...DEFAULT_FOLDERS];
-        DB.logs=payload.new.logs||[];
-        DB.pass=payload.new.pass||null;
-        refresh();
-      }
-    })
-    .subscribe();
-}catch(e){}
+  if(sb){
+    sb.channel('public:sharenest_data')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sharenest_data' }, payload => {
+        if(payload.new&&payload.new.id!==undefined){
+          DB.files=payload.new.files||[];
+          DB.folders=(payload.new.folders&&payload.new.folders.length)?payload.new.folders:[...DEFAULT_FOLDERS];
+          DB.logs=payload.new.logs||[];
+          refresh();
+        }
+      })
+      .subscribe();
+  }
+}catch(e){console.error(e);}
 
 fetchCloudData();
 </script>
