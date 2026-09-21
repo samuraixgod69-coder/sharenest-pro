@@ -4,230 +4,182 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>ShareNest Pro — Global Public Shelf</title>
+<title>ShareNest Pro — Global Cloud Sync</title>
+<!-- Supabase CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{color-scheme:dark;--bg:#060714;--text:#f7f8ff;--muted:#8d91ad;--muted2:#777b99;--card:#17182f;--tile:#1b1c3abc;--tile-h:#27284e;--input:#24244b;--input-b:#3a3b61;--line:#ffffff14;--line2:#4b4d78;--soft:#ffffff14;--thumb:#29294a;--accent:#8e8dff;--side:#08091db3;--pop:#171832;--pop-b:#484975;--hero:linear-gradient(110deg,#39367085,#2c275b59);--app:radial-gradient(circle at 55% 5%,#25204f 0,#0d0f28 34%,#040510 75%);--sideact:linear-gradient(145deg,#31356c,#20234c);--overlay:#0009;--pageview:rgba(3,5,18,.97);--danger:#ff6b81}
 body.light{color-scheme:light;--bg:#eef1ff;--text:#17182f;--muted:#5d6180;--muted2:#6b6f8f;--card:#fff;--tile:#ffffffcc;--tile-h:#f3f4ff;--input:#fff;--input-b:#c9cdf0;--line:#17182f1a;--line2:#c3c7ea;--soft:#17182f0d;--thumb:#e3e6fb;--accent:#5b52ff;--side:#ffffffe6;--pop:#fff;--pop-b:#c3c7ea;--hero:linear-gradient(110deg,#ffffffd9,#e6e9ffd9);--app:linear-gradient(135deg,#eef1ff,#fff);--sideact:linear-gradient(145deg,#dfe2ff,#cfd4ff);--overlay:#17182f66;--pageview:rgba(238,241,255,.98);--danger:#d6304a}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 button,input,select,textarea{font:inherit}button{cursor:pointer}
-button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .app{display:flex;min-height:100vh;background:var(--app)}
-.sidebar{width:96px;position:fixed;left:0;top:0;bottom:0;border-right:1px solid var(--line);background:var(--side);backdrop-filter:blur(10px);padding:22px 14px;z-index:20;display:flex;flex-direction:column;align-items:center;overflow-y:auto}
-.brand{height:64px;width:64px;min-height:64px;border-radius:20px;background:linear-gradient(145deg,#30345e,#171a3d);display:grid;place-items:center;font-size:31px;box-shadow:0 10px 35px #0005;margin-bottom:28px}
-.side{width:62px;height:62px;min-height:62px;border:0;border-radius:20px;background:transparent;color:var(--muted);font-size:25px;margin:4px 0;display:block;transition:.2s}
-.side:hover,.side.active{background:var(--sideact);color:var(--text);box-shadow:0 10px 30px #0003}
+.sidebar{width:96px;position:fixed;left:0;top:0;bottom:0;border-right:1px solid var(--line);background:var(--side);backdrop-filter:blur(10px);padding:22px 14px;z-index:20;display:flex;flex-direction:column;align-items:center}
+.brand{height:64px;width:64px;border-radius:20px;background:linear-gradient(145deg,#30345e,#171a3d);display:grid;place-items:center;font-size:31px;margin-bottom:28px}
+.side{width:62px;height:62px;border:0;border-radius:20px;background:transparent;color:var(--muted);font-size:25px;margin:4px 0}
+.side.active{background:var(--sideact);color:var(--text)}
 .content{margin-left:96px;width:calc(100% - 96px);padding:42px 36px 70px}.top{max-width:1150px;margin:auto}
 h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:8px;font-size:17px}
 .toolbar{display:flex;gap:12px;margin:30px 0;flex-wrap:wrap}
-.upload,.primary{border:0;color:#fff;font-weight:700;padding:16px 22px;border-radius:17px;background:linear-gradient(135deg,#755cff,#4d8cff);box-shadow:0 12px 35px #5e6aff40}
+.upload,.primary{border:0;color:#fff;font-weight:700;padding:16px 22px;border-radius:17px;background:linear-gradient(135deg,#755cff,#4d8cff)}
 .secondary{border:1px solid var(--line2);background:var(--input);color:var(--text);padding:14px 18px;border-radius:15px}
-.danger{border:1px solid var(--danger);background:transparent;color:var(--danger);padding:14px 18px;border-radius:15px}
-.search{flex:1;min-width:220px;border:1px solid var(--input-b);background:var(--input);color:var(--text);border-radius:18px;padding:17px 20px;outline:none;font-size:16px}.search::placeholder{color:var(--muted2)}
-.hero{border:1px solid var(--line);border-radius:32px;padding:34px 40px;background:var(--hero);box-shadow:0 25px 70px #0002;margin-bottom:30px}
-.hero h2{font-size:31px}.hero p{color:var(--muted);margin:10px 0 22px;font-size:16px}
-.stats{display:flex;gap:14px;flex-wrap:wrap}.stat{padding:13px 18px;border-radius:18px;background:var(--soft);color:var(--muted)}.stat b{color:var(--text);margin-right:7px}
-.section-title{display:flex;align-items:center;justify-content:space-between;margin:28px 0 16px;flex-wrap:wrap;gap:10px}.section-title h2{font-size:24px}.view{background:none;border:0;color:var(--accent);padding:6px}
-.files{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.files.list{grid-template-columns:1fr}
-.file{background:var(--card);border:1px solid var(--line);border-radius:25px;overflow:hidden;box-shadow:0 15px 45px #0002;position:relative}
-.thumb{height:180px;background:var(--thumb);display:grid;place-items:center;font-size:65px;position:relative;cursor:pointer;overflow:hidden}
-.thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.file-info{padding:18px;min-width:0}.file-info h3{font-size:17px;word-break:break-word;cursor:pointer}.file-info p{color:var(--muted2);margin-top:7px}
-.file-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:13px;color:var(--muted);gap:10px}
-.file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.mini{border:1px solid var(--line2);background:var(--input);color:var(--text);padding:9px 11px;border-radius:11px;font-size:13px}
+.search{flex:1;min-width:220px;border:1px solid var(--input-b);background:var(--input);color:var(--text);border-radius:18px;padding:17px 20px;outline:none}
+.hero{border:1px solid var(--line);border-radius:32px;padding:34px 40px;background:var(--hero);margin-bottom:30px}
+.hero h2{font-size:31px}.hero p{color:var(--muted);margin:10px 0 22px}
+.stats{display:flex;gap:14px;flex-wrap:wrap}.stat{padding:13px 18px;border-radius:18px;background:var(--soft);color:var(--muted)}.stat b{color:var(--text)}
+.files{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.file{background:var(--card);border:1px solid var(--line);border-radius:25px;overflow:hidden;position:relative}
+.thumb{height:180px;background:var(--thumb);display:grid;place-items:center;font-size:65px;position:relative;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.file-info{padding:18px}
+.file-info h3{font-size:17px;word-break:break-word}
+.file-info p{color:var(--muted2);margin-top:7px}
+.file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.mini{border:1px solid var(--line2);background:var(--input);color:var(--text);padding:9px 11px;border-radius:11px;font-size:13px}
 .empty{padding:40px;text-align:center;color:var(--muted2);grid-column:1/-1}
-.modal{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}
-.box{width:min(550px,100%);max-height:90vh;overflow:auto;padding:28px;border-radius:25px;background:var(--pop);border:1px solid var(--pop-b);box-shadow:0 25px 80px #0006}
-.box h2{margin-bottom:18px}.drop{border:2px dashed #7169ff;border-radius:20px;padding:35px;text-align:center;color:var(--muted)}
-.form-input,.form-select{width:100%;padding:15px;border-radius:14px;border:1px solid var(--pop-b);background:var(--input);color:var(--text);outline:none;margin:8px 0 14px}
-.toast{position:fixed;right:20px;bottom:20px;background:var(--pop);color:var(--text);border:1px solid var(--pop-b);padding:14px 18px;border-radius:14px;opacity:0;transform:translateY(20px);transition:.25s;z-index:80;pointer-events:none}
-.toast.show{opacity:1;transform:translateY(0)}
-.owner-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;background:var(--soft);color:var(--muted);font-size:13px}
-.progress{height:9px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:10px}.progress>div{height:100%;background:linear-gradient(90deg,#755cff,#4d8cff);transition:width .15s}
-.cancel-btn{background:none;border:0;color:var(--accent);margin-top:15px;padding:8px}
-@media(max-width:1100px){.files{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){.files{grid-template-columns:1fr}}
+.modal{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal.show{display:flex}
+.box{width:min(550px,100%);max-height:90vh;overflow:auto;padding:28px;border-radius:25px;background:var(--pop);border:1px solid var(--pop-b)}
+.form-input{width:100%;padding:15px;border-radius:14px;border:1px solid var(--pop-b);background:var(--input);color:var(--text);outline:none;margin:8px 0 14px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--pop);color:var(--text);border:1px solid var(--pop-b);padding:14px 18px;border-radius:14px;opacity:0;transition:.25s;z-index:80}
+.toast.show{opacity:1}
+@media(max-width:900px){.files{grid-template-columns:1fr}.sidebar{width:72px;padding:16px 8px}.content{margin-left:72px;width:calc(100% - 72px)}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
-<div class="brand">🌍</div>
-<button class="side active" title="Public Shelf">🌐</button>
+<div class="brand">☁️</div>
+<button class="side active">🌐</button>
 </aside>
-
 <main class="content"><div class="top">
-<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
-<div><h1>ShareNest Global</h1><p class="subtitle">Dropforma style public global file shelf (5 TB Limit)</p></div>
-<div class="owner-badge">🔓 Public Mode Active</div>
-</div>
-
+<div><h1>ShareNest Cloud</h1><p class="subtitle">Global synchronized public shelf</p></div>
 <div class="toolbar">
-<button class="upload" onclick="openUpload()">☁️ Upload to Global Shelf</button>
-<input id="search" class="search" placeholder="⌕ Search public files..." oninput="render()">
-<button class="secondary" onclick="openSettings()">⚙️ Settings</button>
+<button class="upload" onclick="openUpload()">☁️ Upload Files</button>
+<input id="search" class="search" placeholder="⌕ Search cloud files..." oninput="render()">
 </div>
-
 <section class="hero">
-<h2>Global Public Shelf 📂</h2>
-<p>Files uploaded here are instantly visible to everyone visiting this website link!</p>
-<div class="stats">
-<div class="stat">📦 <b id="fileCount">0</b> Total Files</div>
-<div class="stat">💾 <b id="storageText">0 B / 5 TB</b></div>
-</div>
+<h2>Global Public Storage 🔐</h2>
+<p>Files uploaded here sync instantly across all devices and visitors.</p>
+<div class="stats"><div class="stat">📦 <b id="fileCount">0</b> Files Online</div></div>
 </section>
-
-<div class="section-title">
-  <h2>⚡ Live Global Files</h2>
-</div>
 <section id="files" class="files"></section>
 </div></main></div>
 
 <div id="uploadModal" class="modal"><div class="box">
-<h2>☁️ Upload to Global Shelf</h2>
-<label style="display:block;margin-top:10px;color:var(--muted);font-size:14px">Your Name / Title (Optional)</label>
-<input id="uploaderName" class="form-input" type="text" placeholder="e.g. Anonymous">
-<div id="drop" class="drop" onclick="document.getElementById('picker').click()">
-  ☁️<br><br><b>Tap to choose files</b><br>or drag and drop here
-  <button class="upload" type="button" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('picker').click()">Browse Files</button>
-  <input id="picker" type="file" multiple hidden onchange="uploadFiles(this.files)">
-</div>
-<div id="uploadQueue"></div>
-<br><button class="view" onclick="closeUpload()">Close</button>
-</div></div>
-
-<div id="settingsModal" class="modal"><div class="box">
-<h2>⚙️ Settings</h2>
-<p style="color:var(--muted);margin-bottom:15px">Passcode protection is set to: <b>SAMURAIXGOD698</b></p>
-<button class="secondary" style="width:100%;margin-bottom:10px" onclick="toggleTheme()">🌗 Switch Theme</button>
-<button class="danger" style="width:100%;margin-bottom:10px" onclick="clearGlobalShelf()">🧹 Clear All Global Files</button>
-<button class="cancel-btn" style="width:100%" onclick="closeSettings()">Close</button>
+<h2>☁️ Upload to Global Cloud</h2>
+<input id="uploaderName" class="form-input" type="text" placeholder="Your Name (Optional)">
+<input id="picker" class="form-input" type="file" multiple onchange="uploadFiles(this.files)">
+<div id="uploadStatus" style="color:var(--accent);margin-top:10px"></div>
+<button class="secondary" style="width:100%;margin-top:15px" onclick="closeUpload()">Close</button>
 </div></div>
 
 <div id="toast" class="toast"></div>
 
 <script>
+// --- SUPABASE CONFIGURATION ---
+const SUPABASE_URL = 'https://lahnustwkknopcfbqwqp.supabase.co';[span_0](start_span)[span_0](end_span)
+const SUPABASE_PUBLISHABLE_KEY = 'Sb_publishable_Q1dDN09bCcYaerXxefwbmA_6Icam4qe';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const FIXED_PASS = 'SAMURAIXGOD698';
-
-let files = JSON.parse(localStorage.getItem('global_shelf_files') || '[]');
+let files = [];
 
 function toast(msg){
   const t=$('toast');t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2800);
 }
 
-function formatBytes(n){
-  n=n||0;
-  if(n<1024)return n+' B';
-  if(n<1048576)return (n/1024).toFixed(1)+' KB';
-  if(n<1073741824)return (n/1048576).toFixed(1)+' MB';
-  return (n/1099511627776).toFixed(2)+' TB';
+async function fetchFiles(){
+  const { data, error } = await supabase.from('files').select('*').order('created_at', { ascending: false });
+  if(!error && data) {
+    files = data;
+    render();
+  }
 }
 
 function render(){
   const q = $('search').value.toLowerCase();
-  const filtered = files.filter(f => f.name.toLowerCase().includes(q) || (f.uploader && f.uploader.toLowerCase().includes(q)));
+  const filtered = files.filter(f => f.name.toLowerCase().includes(q));
   const box = $('files');
   
   if(!filtered.length){
-    box.innerHTML = '<div class="empty">No global files found. Be the first to upload!</div>';
+    box.innerHTML = '<div class="empty">No files in cloud yet. Upload one!</div>';
   } else {
-    box.innerHTML = filtered.map((f, i) => `
+    box.innerHTML = filtered.map(f => `
       <article class="file">
-        <div class="thumb" onclick="downloadFile(${i})">
-          ${f.type.startsWith('image/') ? `<img src="${f.data}" alt="">` : '<span>📄</span>'}
+        <div class="thumb">
+          ${f.type && f.type.startsWith('image/') ? `<img src="${f.url}" alt="">` : '<span>📄</span>'}
         </div>
         <div class="file-info">
-          <h3 onclick="downloadFile(${i})">${esc(f.name)}</h3>
-          <p>By: <b>${esc(f.uploader || 'Anonymous')}</b> • ${formatBytes(f.size)}</p>
+          <h3>${esc(f.name)}</h3>
+          <p>By: <b>${esc(f.uploader || 'Anonymous')}</b></p>
           <div class="file-actions">
-            <button class="mini" onclick="downloadFile(${i})">⬇️ Download</button>
-            <button class="mini" onclick="deleteGlobalFile(${i})">🗑️ Delete</button>
+            <a class="mini" href="${f.url}" target="_blank" download style="text-decoration:none">⬇️ Download</a>
+            <button class="mini" onclick="deleteFile('${f.id}', '${f.path}')">🗑️ Delete</button>
           </div>
         </div>
       </article>
     `).join('');
   }
-  
   $('fileCount').textContent = files.length;
-  const totalSize = files.reduce((acc, f) => acc + (f.size || 0), 0);
-  $('storageText').textContent = formatBytes(totalSize) + ' / 5 TB';
 }
 
 function openUpload(){ $('uploadModal').classList.add('show'); }
-function closeUpload(){ $('uploadModal').classList.remove('show'); render(); }
-function openSettings(){ $('settingsModal').classList.add('show'); }
-function closeSettings(){ $('settingsModal').classList.remove('show'); }
-function toggleTheme(){ document.body.classList.toggle('light'); toast('Theme toggled'); }
+function closeUpload(){ $('uploadModal').classList.remove('show'); fetchFiles(); }
 
-function uploadFiles(fileList){
+async function uploadFiles(fileList){
   const uploader = $('uploaderName').value.trim() || 'Anonymous';
-  const queue = $('uploadQueue');
-  queue.innerHTML = '<p style="color:var(--accent);margin-top:10px">Processing files...</p>';
-  
-  let processed = 0;
-  [...fileList].forEach(file => {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      files.unshift({
-        name: file.name,
-        size: file.size,
-        type: file.type || 'application/octet-stream',
-        uploader: uploader,
-        data: e.target.result,
-        time: Date.now()
-      });
-      processed++;
-      if(processed === fileList.length){
-        localStorage.setItem('global_shelf_files', JSON.stringify(files));
-        queue.innerHTML = '<p style="color:#2ecc71;margin-top:10px">✅ Successfully uploaded to Global Shelf!</p>';
-        toast('Files uploaded successfully!');
-        render();
-      }
-    };
-    reader.readAsDataURL(file);
-  });
+  const status = $('uploadStatus');
+  status.textContent = 'Uploading to cloud...';
+
+  for(const file of fileList){
+    const filePath = 'public/' + Date.now() + '_' + file.name;
+    const { data: storageData, error: storageError } = await supabase.storage.from('sharenest-files').upload(filePath, file);
+    
+    if(storageError){
+      status.textContent = '❌ Error: ' + storageError.message;
+      return;
+    }
+
+    const { data: { publicUrl } } = supabase.storage.from('sharenest-files').getPublicUrl(filePath);
+
+    await supabase.from('files').insert([{
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      uploader: uploader,
+      url: publicUrl,
+      path: filePath
+    }]);
+  }
+
+  status.textContent = '✅ Uploaded successfully!';
+  toast('Files synced to cloud!');
+  fetchFiles();
 }
 
-function downloadFile(i){
-  const f = files[i];
-  const a = document.createElement('a');
-  a.href = f.data;
-  a.download = f.name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  toast('Download started');
-}
-
-function deleteGlobalFile(i){
-  const pass = prompt('Enter Owner Passcode (SAMURAIXGOD698) to delete:');
-  if(pass === FIXED_PASS){
-    files.splice(i, 1);
-    localStorage.setItem('global_shelf_files', JSON.stringify(files));
-    render();
+async function deleteFile(id, path){
+  const pass = prompt('Enter Owner Passcode (SAMURAIXGOD698):');
+  if(pass === 'SAMURAIXGOD698'){
+    await supabase.storage.from('sharenest-files').remove([path]);
+    await supabase.from('files').delete().eq('id', id);
+    fetchFiles();
     toast('File deleted');
   } else if(pass !== null){
     alert('Incorrect passcode!');
   }
 }
 
-function clearGlobalShelf(){
-  const pass = prompt('Enter Owner Passcode (SAMURAIXGOD698) to clear all files:');
-  if(pass === FIXED_PASS){
-    files = [];
-    localStorage.removeItem('global_shelf_files');
-    render();
-    closeSettings();
-    toast('Global shelf cleared');
-  } else if(pass !== null){
-    alert('Incorrect passcode!');
-  }
-}
+// Real-time listener for automatic sync across devices
+supabase.channel('public:files')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, payload => {
+    fetchFiles();
+  })
+  .subscribe();
 
-render();
+fetchFiles();
 </script>
 </body>
 </html>
