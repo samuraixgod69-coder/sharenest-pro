@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-x<html lang="en">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -198,7 +198,6 @@ h1{font-size:34px}
 <div class="notice">Current mode: <b id="settingsMode">Viewer</b></div>
 <button class="primary" style="width:100%;margin-bottom:10px" onclick="unlockOwner()">🔐 Owner sign-in</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="lockOwner()">🔒 Lock</button>
-<button class="secondary" style="width:100%;margin-bottom:10px" onclick="changePassword()">🔑 Change passcode</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="exportDataBackup()">💾 Export file list (JSON)</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="emptyTrash()">🧹 Empty trash</button>
 <button class="secondary" style="width:100%;margin-bottom:10px" onclick="toggleTheme()">🌗 Switch theme</button>
@@ -223,13 +222,15 @@ const DEFAULT_FOLDERS=['Camera','Videos','Memories','Documents'];
 const TRASH_DAYS=30,AUTOLOCK_MS=5*60*1000;
 const CLOSABLE=['previewModal','folderModal','settingsModal'];
 
-let DB={files:[],folders:[],logs:[],pass:null};   // everything saved on this device
-let S={owner:false,files:[],trash:[],folders:[],logs:[],quota:0,usage:0}; // what the current mode may see
+let DB={files:[],folders:[],logs:[]};
+let S={owner:false,files:[],trash:[],folders:[],logs:[],quota:0,usage:0};
 let idb=null,thumbURL={},previewURL=null,loaded=false,uploading=false;
 let selected=new Set(),pageHistory=['home'],currentPage='home',query='';
 let viewMode=lsGet('sn_view','grid'),theme=lsGet('sn_theme','dark');
 let afterLogin=null,dialogCloseCb=null,lockTimer=null;
 document.body.classList.toggle('light',theme==='light');
+
+const FIXED_PASS = 'SAMURAIXGOD698';
 
 const byId=id=>S.files.find(f=>f.id===id);
 const recOf=id=>DB.files.find(f=>f.id===id);
@@ -328,105 +329,25 @@ async function makeThumb(file,type){
 }
 
 /* ================= passcode (local lock) ================= */
-const K=[],H0=[];
-(function(){let n=2,c=0;while(c<64){let p=true;for(let i=2;i*i<=n;i++)if(n%i===0){p=false;break}if(p){if(c<8)H0[c]=(Math.pow(n,.5)%1)*4294967296|0;K[c]=(Math.pow(n,1/3)%1)*4294967296|0;c++}n++}})();
-function sha256(msg){
-  const b=new TextEncoder().encode(msg),l=b.length,w=[];
-  for(let i=0;i<l;i++)w[i>>2]|=b[i]<<(24-8*(i&3));
-  w[l>>2]|=0x80<<(24-8*(l&3));
-  const n=(((l+8)>>6)+1)*16;w[n-1]=l*8;
-  const h=H0.slice(),x=new Array(64);
-  for(let o=0;o<n;o+=16){
-    for(let i=0;i<64;i++){
-      if(i<16)x[i]=w[o+i]|0;
-      else{const a=x[i-15],c=x[i-2];x[i]=(x[i-16]+(((a>>>7)|(a<<25))^((a>>>18)|(a<<14))^(a>>>3))+x[i-7]+(((c>>>17)|(c<<15))^((c>>>19)|(c<<13))^(c>>>10)))|0}
-    }
-    let a=h[0],b2=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
-    for(let i=0;i<64;i++){
-      const t1=(hh+(((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)))+((e&f)^(~e&g))+K[i]+x[i])|0;
-      const t2=((((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)))+((a&b2)^(a&c)^(b2&c)))|0;
-      hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0;
-    }
-    h[0]=(h[0]+a)|0;h[1]=(h[1]+b2)|0;h[2]=(h[2]+c)|0;h[3]=(h[3]+d)|0;h[4]=(h[4]+e)|0;h[5]=(h[5]+f)|0;h[6]=(h[6]+g)|0;h[7]=(h[7]+hh)|0;
-  }
-  return h.map(v=>(v>>>0).toString(16).padStart(8,'0')).join('');
-}
-const hex=u8=>[...u8].map(b=>b.toString(16).padStart(2,'0')).join('');
-const unhex=s=>new Uint8Array(s.match(/../g).map(h=>parseInt(h,16)));
-const randHex=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return hex(a)};
-async function derive(secret,saltHex,alg){
-  if(alg==='pbkdf2'&&window.crypto&&crypto.subtle){
-    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
-    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:150000},key,256);
-    return hex(new Uint8Array(bits));
-  }
-  let h=sha256(saltHex+secret);
-  for(let i=0;i<20000;i++)h=sha256(h+saltHex);
-  return h;
-}
-const normRec=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-function genRecovery(){
-  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(16);crypto.getRandomValues(a);
-  const s=[...a].map(v=>chars[v%chars.length]).join('');
-  return s.match(/.{4}/g).join('-');
-}
-async function makePass(pw,rec){
-  const alg=(window.crypto&&crypto.subtle)?'pbkdf2':'sha',salt=randHex(16),rsalt=randHex(16);
-  return {alg,salt,hash:await derive(pw,salt,alg),rsalt,rhash:await derive(normRec(rec),rsalt,alg)};
-}
-const sameHash=(a,b)=>a.length===b.length&&[...a].every((c,i)=>c===b[i]);
-
 function authError(msg){const p=$('passwordError');if(!p)return;p.textContent='❌ '+msg;p.style.display='block'}
-function showPassword(mode){
-  mode=mode||(DB.pass?'login':'setup');
-  const pw=(id,ph,ac)=>'<input id="'+id+'" class="form-input" type="password" placeholder="'+ph+'" autocomplete="'+ac+'">';
-  let h='';
-  if(mode==='setup'){
-    h='<div class="password-icon">🔐</div><h2 style="text-align:center">Create your passcode</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">This passcode unlocks uploads and private files on this device. You will get a recovery code next.</p>'+
-      pw('pwNew','New passcode (min 6 characters)','new-password')+pw('pwNew2','Repeat passcode','new-password')+
-      '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dosetup">Create passcode</button>';
-  }else if(mode==='recover'){
-    h='<div class="password-icon">🛟</div><h2 style="text-align:center">Reset with recovery code</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">Enter the recovery code you saved, then choose a new passcode.</p>'+
-      '<input id="recCode" class="form-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters">'+pw('pwNew','New passcode (min 6 characters)','new-password')+
-      '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dorecover">Reset passcode</button>';
-  }else{
-    h='<div class="password-icon">🔐</div><h2 style="text-align:center">Owner sign-in</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">Enter your passcode to upload and manage files.</p>'+
-      '<input id="uploadPassword" class="form-input" type="password" placeholder="Passcode" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')checkOwnerPassword()">'+
-      '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dologin">🔓 Unlock</button>'+
-      '<button class="cancel-btn" style="width:100%;margin-top:10px" data-act="forgot">Forgot passcode?</button>';
-  }
-  h+='<button class="cancel-btn" style="width:100%" onclick="closePassword()">Cancel</button>';
+function showPassword(){
+  const h='<div class="password-icon">🔐</div><h2 style="text-align:center">Owner sign-in</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">Enter your passcode to upload and manage files.</p>'+
+    '<input id="uploadPassword" class="form-input" type="password" placeholder="Passcode" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')checkOwnerPassword()">'+
+    '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dologin">🔓 Unlock</button>'+
+    '<button class="cancel-btn" style="width:100%" onclick="closePassword()">Cancel</button>';
   $('authBox').innerHTML=h;$('passwordModal').classList.add('show');
-  setTimeout(()=>{const f=$('uploadPassword')||$('pwNew')||$('recCode');if(f)f.focus()},100);
+  setTimeout(()=>{const f=$('uploadPassword');if(f)f.focus()},100);
 }
 function closePassword(){$('passwordModal').classList.remove('show');$('authBox').innerHTML=''}
 async function unlockNow(){
   S.owner=true;resetAutoLock();logAct('Owner unlocked');await refresh();
-}
-async function doSetup(){
-  const a=$('pwNew').value,b=$('pwNew2').value;
-  if(a.length<6)return authError('Passcode must be at least 6 characters');
-  if(a!==b)return authError('Passcodes do not match');
-  const rec=genRecovery();
-  DB.pass=await makePass(a,rec);await kvSet('pass',DB.pass);
-  closePassword();await unlockNow();showRecovery(rec);
-}
-async function doRecover(){
-  const code=$('recCode').value,a=$('pwNew').value;
-  if(a.length<6)return authError('New passcode must be at least 6 characters');
-  const h=await derive(normRec(code),DB.pass.rsalt,DB.pass.alg);
-  if(!sameHash(h,DB.pass.rhash))return authError('Recovery code is incorrect');
-  const rec=genRecovery();
-  DB.pass=await makePass(a,rec);await kvSet('pass',DB.pass);
-  closePassword();await unlockNow();showRecovery(rec);
 }
 async function checkOwnerPassword(){
   const until=+lsGet('sn_lockuntil','0');
   if(until>Date.now())return authError('Too many attempts. Try again in '+Math.ceil((until-Date.now())/60000)+' min.');
   const inp=$('uploadPassword'),pw=inp.value;
   if(!pw)return;
-  const h=await derive(pw,DB.pass.salt,DB.pass.alg);
-  if(sameHash(h,DB.pass.hash)){
+  if(pw===FIXED_PASS){
     lsSet('sn_fails','0');closePassword();await unlockNow();toast('👑 Signed in');
     const cb=afterLogin;afterLogin=null;if(cb)cb();
   }else{
@@ -435,11 +356,6 @@ async function checkOwnerPassword(){
     else authError('Incorrect passcode');
     inp.value='';inp.focus();
   }
-}
-function showRecovery(code){
-  dialogCloseCb=afterLogin;afterLogin=null;
-  openDialog('<h2>🛟 Save your recovery code</h2><p style="color:var(--muted)">If you forget your passcode, this code is the only way to reset it without erasing everything. It is shown once. Write it down or take a screenshot.</p><div class="code">'+esc(code)+'</div>'+
-    '<button class="primary" style="width:100%" onclick="closeDialog()">I saved it</button>');
 }
 function openUpload(){
   if(!S.owner){afterLogin=openUploadModal;showPassword();return}
@@ -458,27 +374,6 @@ async function doLock(auto){
   toast(auto?'🔒 Auto-locked after 5 minutes':'🔒 Locked');
 }
 function lockOwner(){doLock(false)}
-function changePassword(){
-  if(!needOwner())return;
-  closeSettings();
-  openDialog('<h2>🔑 Change passcode</h2>'+
-    '<input id="cpOld" class="form-input" type="password" placeholder="Current passcode" autocomplete="current-password">'+
-    '<input id="cpNew" class="form-input" type="password" placeholder="New passcode (min 6 characters)" autocomplete="new-password">'+
-    '<input id="cpNew2" class="form-input" type="password" placeholder="Repeat new passcode" autocomplete="new-password">'+
-    '<button class="primary" style="width:100%" data-act="dochpw">Save passcode</button>'+
-    '<button class="cancel-btn" style="width:100%" onclick="closeDialog()">Cancel</button>');
-}
-async function doChangePassword(){
-  const o=$('cpOld').value,n=$('cpNew').value,n2=$('cpNew2').value;
-  const h=await derive(o,DB.pass.salt,DB.pass.alg);
-  if(!sameHash(h,DB.pass.hash)){toast('❌ Current passcode is incorrect');return}
-  if(n.length<6){toast('❌ New passcode must be at least 6 characters');return}
-  if(n!==n2){toast('❌ New passcodes do not match');return}
-  const salt=randHex(16);
-  DB.pass=Object.assign({},DB.pass,{salt,hash:await derive(n,salt,DB.pass.alg)});
-  await kvSet('pass',DB.pass);logAct('Passcode changed');
-  closeDialog();toast('🔑 Passcode updated');
-}
 
 /* ================= state + rendering ================= */
 function sync(){
@@ -632,7 +527,7 @@ function exportDataBackup(){
 }
 async function eraseEverything(){
   if(!needOwner())return;
-  if(!confirm('Erase ALL files, folders, logs and the passcode from this device? This cannot be undone.'))return;
+  if(!confirm('Erase ALL files, folders, logs from this device? This cannot be undone.'))return;
   if(!confirm('Last check: everything will be deleted permanently. Continue?'))return;
   try{idb.close()}catch(e){}
   await new Promise(r=>{const q=indexedDB.deleteDatabase('sharenest_pro');q.onsuccess=q.onerror=q.onblocked=()=>r()});
@@ -940,11 +835,7 @@ const ACTIONS={
   folder:(id,el)=>openFolder(el.dataset.folder),
   renfolder:(id,el)=>renameFolder(el.dataset.folder),
   delfolder:(id,el)=>deleteFolder(el.dataset.folder),
-  dochpw:()=>doChangePassword(),
-  dosetup:()=>doSetup(),
-  dorecover:()=>doRecover(),
   dologin:()=>checkOwnerPassword(),
-  forgot:()=>showPassword('recover'),
   closepreview:()=>closePreview()
 };
 document.addEventListener('click',e=>{
@@ -982,8 +873,8 @@ async function init(){
   try{
     const t=idb.transaction(['meta','thumbs','kv']);
     const ts=t.objectStore('thumbs'),kv=t.objectStore('kv');
-    const r=await Promise.all([rq(t.objectStore('meta').getAll()),rq(ts.getAllKeys()),rq(ts.getAll()),rq(kv.get('folders')),rq(kv.get('logs')),rq(kv.get('pass'))]);
-    DB.files=r[0];DB.folders=r[3]||[...DEFAULT_FOLDERS];DB.logs=r[4]||[];DB.pass=r[5]||null;
+    const r=await Promise.all([rq(t.objectStore('meta').getAll()),rq(ts.getAllKeys()),rq(ts.getAll()),rq(kv.get('folders')),rq(kv.get('logs'))]);
+    DB.files=r[0];DB.folders=r[3]||[...DEFAULT_FOLDERS];DB.logs=r[4]||[];
     r[1].forEach((k,i)=>{thumbURL[k]=URL.createObjectURL(r[2][i])});
     if(!r[3])await kvSet('folders',DB.folders);
     await purgeTrash();
