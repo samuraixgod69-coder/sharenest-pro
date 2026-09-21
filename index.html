@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>ShareNest Pro — Global Cloud Sync</title>
-<!-- Supabase CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{color-scheme:dark;--bg:#060714;--text:#f7f8ff;--muted:#8d91ad;--muted2:#777b99;--card:#17182f;--tile:#1b1c3abc;--tile-h:#27284e;--input:#24244b;--input-b:#3a3b61;--line:#ffffff14;--line2:#4b4d78;--soft:#ffffff14;--thumb:#29294a;--accent:#8e8dff;--side:#08091db3;--pop:#171832;--pop-b:#484975;--hero:linear-gradient(110deg,#39367085,#2c275b59);--app:radial-gradient(circle at 55% 5%,#25204f 0,#0d0f28 34%,#040510 75%);--sideact:linear-gradient(145deg,#31356c,#20234c);--overlay:#0009;--pageview:rgba(3,5,18,.97);--danger:#ff6b81}
@@ -13,173 +12,888 @@ body.light{color-scheme:light;--bg:#eef1ff;--text:#17182f;--muted:#5d6180;--mute
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 button,input,select,textarea{font:inherit}button{cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .app{display:flex;min-height:100vh;background:var(--app)}
-.sidebar{width:96px;position:fixed;left:0;top:0;bottom:0;border-right:1px solid var(--line);background:var(--side);backdrop-filter:blur(10px);padding:22px 14px;z-index:20;display:flex;flex-direction:column;align-items:center}
-.brand{height:64px;width:64px;border-radius:20px;background:linear-gradient(145deg,#30345e,#171a3d);display:grid;place-items:center;font-size:31px;margin-bottom:28px}
-.side{width:62px;height:62px;border:0;border-radius:20px;background:transparent;color:var(--muted);font-size:25px;margin:4px 0}
-.side.active{background:var(--sideact);color:var(--text)}
+.sidebar{width:96px;position:fixed;left:0;top:0;bottom:0;border-right:1px solid var(--line);background:var(--side);backdrop-filter:blur(10px);padding:22px 14px;z-index:20;display:flex;flex-direction:column;align-items:center;overflow-y:auto}
+.brand{height:64px;width:64px;min-height:64px;border-radius:20px;background:linear-gradient(145deg,#30345e,#171a3d);display:grid;place-items:center;font-size:31px;box-shadow:0 10px 35px #0005;margin-bottom:28px}
+.side{width:62px;height:62px;min-height:62px;border:0;border-radius:20px;background:transparent;color:var(--muted);font-size:25px;margin:4px 0;display:block;transition:.2s}
+.side:hover,.side.active{background:var(--sideact);color:var(--text);box-shadow:0 10px 30px #0003}
 .content{margin-left:96px;width:calc(100% - 96px);padding:42px 36px 70px}.top{max-width:1150px;margin:auto}
 h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:8px;font-size:17px}
 .toolbar{display:flex;gap:12px;margin:30px 0;flex-wrap:wrap}
-.upload,.primary{border:0;color:#fff;font-weight:700;padding:16px 22px;border-radius:17px;background:linear-gradient(135deg,#755cff,#4d8cff)}
+.upload,.primary{border:0;color:#fff;font-weight:700;padding:16px 22px;border-radius:17px;background:linear-gradient(135deg,#755cff,#4d8cff);box-shadow:0 12px 35px #5e6aff40}
 .secondary{border:1px solid var(--line2);background:var(--input);color:var(--text);padding:14px 18px;border-radius:15px}
-.search{flex:1;min-width:220px;border:1px solid var(--input-b);background:var(--input);color:var(--text);border-radius:18px;padding:17px 20px;outline:none}
-.hero{border:1px solid var(--line);border-radius:32px;padding:34px 40px;background:var(--hero);margin-bottom:30px}
-.hero h2{font-size:31px}.hero p{color:var(--muted);margin:10px 0 22px}
-.stats{display:flex;gap:14px;flex-wrap:wrap}.stat{padding:13px 18px;border-radius:18px;background:var(--soft);color:var(--muted)}.stat b{color:var(--text)}
-.files{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
-.file{background:var(--card);border:1px solid var(--line);border-radius:25px;overflow:hidden;position:relative}
-.thumb{height:180px;background:var(--thumb);display:grid;place-items:center;font-size:65px;position:relative;overflow:hidden}
-.thumb img{width:100%;height:100%;object-fit:cover}
-.file-info{padding:18px}
-.file-info h3{font-size:17px;word-break:break-word}
-.file-info p{color:var(--muted2);margin-top:7px}
-.file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.mini{border:1px solid var(--line2);background:var(--input);color:var(--text);padding:9px 11px;border-radius:11px;font-size:13px}
+.danger{border:1px solid var(--danger);background:transparent;color:var(--danger);padding:14px 18px;border-radius:15px}
+.search{flex:1;min-width:220px;border:1px solid var(--input-b);background:var(--input);color:var(--text);border-radius:18px;padding:17px 20px;outline:none;font-size:16px}.search::placeholder{color:var(--muted2)}
+.hero{border:1px solid var(--line);border-radius:32px;padding:34px 40px;background:var(--hero);box-shadow:0 25px 70px #0002;margin-bottom:30px}
+.hero h2{font-size:31px}.hero p{color:var(--muted);margin:10px 0 22px;font-size:16px}
+.stats{display:flex;gap:14px;flex-wrap:wrap}.stat{padding:13px 18px;border-radius:18px;background:var(--soft);color:var(--muted)}.stat b{color:var(--text);margin-right:7px}
+.analytics-card{margin-top:20px;background:var(--tile);border:1px solid var(--line);padding:20px 24px;border-radius:20px}
+.analytics-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px}
+.an-item{background:var(--soft);padding:12px;border-radius:12px;font-size:13px;color:var(--muted)}
+.an-item b{display:block;color:var(--text);font-size:16px;margin-top:4px}
+.section-title{display:flex;align-items:center;justify-content:space-between;margin:28px 0 16px;flex-wrap:wrap;gap:10px}.section-title h2{font-size:24px}.view{background:none;border:0;color:var(--accent);padding:6px}
+.folders{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.folder{padding:20px;border-radius:20px;background:var(--tile);border:1px solid var(--line);display:flex;align-items:center;gap:15px;transition:.2s;cursor:pointer}.folder:hover{transform:translateY(-2px);background:var(--tile-h)}
+.folder-icon{font-size:30px}.folder h3{font-size:16px;word-break:break-word}.folder small{display:block;color:var(--muted2);margin-top:4px}
+.fmanage{display:flex;gap:6px}.fmanage .mini{padding:6px 8px}
+.files{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}.files.list{grid-template-columns:1fr}
+.file{background:var(--card);border:1px solid var(--line);border-radius:25px;overflow:hidden;box-shadow:0 15px 45px #0002;position:relative}
+.files.list .file{display:flex}.files.list .thumb{width:180px;min-width:180px;height:120px}.files.list .file-info{flex:1}
+.thumb{height:180px;background:var(--thumb);display:grid;place-items:center;font-size:65px;position:relative;cursor:pointer;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.play{position:absolute;left:12px;bottom:12px;background:#000a;color:#fff;border-radius:99px;padding:4px 9px;font-size:13px}
+.file-checkbox{position:absolute;left:12px;top:12px;width:22px;height:22px;cursor:pointer;z-index:5}
+.more{position:absolute;right:12px;top:12px;width:40px;height:40px;border:0;border-radius:13px;background:#15162bd9;color:#fff;font-size:22px;z-index:5}
+.file-info{padding:18px;min-width:0}.file-info h3{font-size:17px;word-break:break-word;cursor:pointer}.file-info p{color:var(--muted2);margin-top:7px}
+.tags{margin-top:6px;font-size:12px;color:var(--muted2);word-break:break-word}
+.file-bottom{display:flex;justify-content:space-between;align-items:center;margin-top:13px;color:var(--muted);gap:10px}.star{background:none;border:0;color:var(--muted2);font-size:20px}.star.on{color:#f0b400}
+.file-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.mini{border:1px solid var(--line2);background:var(--input);color:var(--text);padding:9px 11px;border-radius:11px;font-size:13px}
 .empty{padding:40px;text-align:center;color:var(--muted2);grid-column:1/-1}
-.modal{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
-.modal.show{display:flex}
-.box{width:min(550px,100%);max-height:90vh;overflow:auto;padding:28px;border-radius:25px;background:var(--pop);border:1px solid var(--pop-b)}
-.form-input{width:100%;padding:15px;border-radius:14px;border:1px solid var(--pop-b);background:var(--input);color:var(--text);outline:none;margin:8px 0 14px}
-.toast{position:fixed;right:20px;bottom:20px;background:var(--pop);color:var(--text);border:1px solid var(--pop-b);padding:14px 18px;border-radius:14px;opacity:0;transition:.25s;z-index:80}
-.toast.show{opacity:1}
-@media(max-width:900px){.files{grid-template-columns:1fr}.sidebar{width:72px;padding:16px 8px}.content{margin-left:72px;width:calc(100% - 72px)}}
+.modal{position:fixed;inset:0;background:var(--overlay);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}.modal.show{display:flex}
+#pageView{display:none!important;background:var(--pageview);align-items:flex-start;justify-content:flex-start;overflow:auto}#pageView.show{display:flex!important}
+.box{width:min(550px,100%);max-height:90vh;overflow:auto;padding:28px;border-radius:25px;background:var(--pop);border:1px solid var(--pop-b);box-shadow:0 25px 80px #0006}
+.box h2{margin-bottom:18px}.drop{border:2px dashed #7169ff;border-radius:20px;padding:35px;text-align:center;color:var(--muted)}
+.form-input,.form-select,.form-textarea{width:100%;padding:15px;border-radius:14px;border:1px solid var(--pop-b);background:var(--input);color:var(--text);outline:none;margin:8px 0 14px}
+.toast{position:fixed;right:20px;bottom:20px;background:var(--pop);color:var(--text);border:1px solid var(--pop-b);padding:14px 18px;border-radius:14px;opacity:0;transform:translateY(20px);transition:.25s;z-index:80;pointer-events:none;max-width:calc(100% - 40px)}.toast.show{opacity:1;transform:translateY(0)}
+.password-icon{font-size:55px;text-align:center;margin-bottom:12px}.password-error{display:none;color:var(--danger);font-size:14px;margin:-5px 0 12px}
+.cancel-btn{background:none;border:0;color:var(--accent);margin-top:15px;padding:8px}
+.owner-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 12px;border-radius:13px;background:var(--soft);color:var(--muted);font-size:13px}
+.progress{height:9px;background:var(--soft);border-radius:99px;overflow:hidden;margin-top:10px}.progress>div{height:100%;background:linear-gradient(90deg,#755cff,#4d8cff);transition:width .15s}
+.progress.ind>div{width:40%!important;animation:ind 1s ease-in-out infinite alternate}
+@keyframes ind{from{margin-left:0}to{margin-left:60%}}
+.menu{position:fixed;z-index:100;background:var(--pop);border:1px solid var(--line2);border-radius:16px;padding:8px;box-shadow:0 20px 60px #0006;min-width:200px;max-height:calc(100vh - 16px);overflow:auto}.menu button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--text);padding:12px;border-radius:10px}.menu button:hover{background:var(--tile-h)}
+.notice{padding:14px 16px;border:1px solid var(--line2);background:var(--soft);border-radius:15px;color:var(--muted);margin:16px 0;word-break:break-word}.notice b{color:var(--text)}
+.batch-toolbar{display:none;gap:10px;margin-bottom:15px;background:var(--tile);padding:12px 16px;border-radius:14px;align-items:center;flex-wrap:wrap}
+.batch-toolbar.show{display:flex}
+.preview-container{text-align:center}
+.preview-container img,.preview-container video,.preview-container audio{max-width:100%;max-height:60vh;border-radius:14px;margin-top:12px}
+.uprow{margin-top:14px}.upname{font-size:14px;word-break:break-word}.upstat{color:var(--muted2)}.upstat.bad{color:var(--danger)}
+.back-btn{border:1px solid #087fff;border-radius:12px;background:var(--input);color:var(--text);padding:10px 15px;margin-bottom:25px}
+.row-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:22px;letter-spacing:2px;text-align:center;padding:18px 12px;border-radius:14px;background:var(--soft);border:1px dashed var(--line2);margin:14px 0;user-select:all;word-break:break-all}
+@media(max-width:1100px){.files{grid-template-columns:repeat(2,1fr)}.folders{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){
+.sidebar{width:72px;padding:16px 8px}
+.brand{width:52px;height:52px;min-height:52px}
+.side{width:52px;height:52px;min-height:52px;font-size:22px}
+.content{margin-left:72px;width:calc(100% - 72px);padding:24px 16px}
+.analytics-grid{grid-template-columns:repeat(2,1fr)}
+h1{font-size:34px}
+}
+@media(max-width:640px){.files{grid-template-columns:1fr}.hero{padding:24px}.files.list .thumb{width:120px;min-width:120px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside class="sidebar">
 <div class="brand">☁️</div>
-<button class="side active">🌐</button>
+<button class="side active" data-page="home" onclick="navigate('home',this)" title="Dashboard" aria-label="Dashboard">🏠</button>
+<button class="side" data-page="photos" onclick="navigate('photos',this)" title="Photos" aria-label="Photos">🖼️</button>
+<button class="side" data-page="videos" onclick="navigate('videos',this)" title="Videos" aria-label="Videos">🎬</button>
+<button class="side" data-page="audio" onclick="navigate('audio',this)" title="Audio" aria-label="Audio">🎵</button>
+<button class="side" data-page="folders" onclick="navigate('folders',this)" title="Folders" aria-label="Folders">📁</button>
+<button class="side" data-page="favorites" onclick="navigate('favorites',this)" title="Favorites" aria-label="Favorites">⭐</button>
+<button class="side" data-page="recent" onclick="navigate('recent',this)" title="Recent" aria-label="Recent">🕘</button>
+<button class="side" data-page="trash" onclick="navigate('trash',this)" title="Trash" aria-label="Trash">🗑️</button>
+<button class="side" data-page="activity" onclick="navigate('activity',this)" title="Activity Log" aria-label="Activity log">📋</button>
 </aside>
+
 <main class="content"><div class="top">
-<div><h1>ShareNest Cloud</h1><p class="subtitle">Global synchronized public shelf</p></div>
+<div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap">
+<div><h1>ShareNest Pro</h1><p class="subtitle">Global synchronized cloud storage.</p></div>
+<div id="modeBadge" class="owner-badge">👤 Viewer Mode</div>
+</div>
+
 <div class="toolbar">
 <button class="upload" onclick="openUpload()">☁️ Upload Files</button>
-<input id="search" class="search" placeholder="⌕ Search cloud files..." oninput="render()">
+<input id="search" class="search" placeholder="⌕ Search files, tags, folders..." oninput="searchFiles()">
+<button class="secondary" onclick="openSettings()">⚙️ Settings</button>
 </div>
+
 <section class="hero">
-<h2>Global Public Storage 🔐</h2>
-<p>Files uploaded here sync instantly across all devices and visitors.</p>
-<div class="stats"><div class="stat">📦 <b id="fileCount">0</b> Files Online</div></div>
+<h2>Global cloud overview 🔐</h2>
+<p>Upload, organize, preview and share your files instantly across all devices.</p>
+<div class="stats">
+<div class="stat">🖼️ <b id="photoCount">0</b> Photos</div>
+<div class="stat">🎬 <b id="videoCount">0</b> Videos</div>
+<div class="stat">🎵 <b id="audioCount">0</b> Audio</div>
+<div class="stat">💾 <b id="storageText">0 B</b></div>
+</div>
+<div class="progress"><div id="storageBar" style="width:0%"></div></div>
+
+<div class="analytics-card">
+  <b style="font-size:15px">📊 Storage breakdown</b>
+  <div class="analytics-grid">
+    <div class="an-item">Images<b id="anImages">0 B</b></div>
+    <div class="an-item">Videos<b id="anVideos">0 B</b></div>
+    <div class="an-item">Audio &amp; documents<b id="anOthers">0 B</b></div>
+    <div class="an-item">Trash<b id="anTrash">0 B</b></div>
+  </div>
+</div>
 </section>
+
+<div class="section-title">
+  <h2>📁 Folders</h2>
+  <button class="view" onclick="openCreateFolderModal()">+ New Folder</button>
+</div>
+<section id="foldersContainer" class="folders"></section>
+
+<div class="section-title">
+  <h2>🕘 Recent Uploads</h2>
+  <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <select id="sortSelect" class="form-select" style="margin:0;padding:8px 12px;font-size:14px;width:auto" onchange="render()" aria-label="Sort files">
+      <option value="newest">Sort: Newest First</option>
+      <option value="oldest">Sort: Oldest First</option>
+      <option value="name">Sort: Name (A-Z)</option>
+      <option value="size">Sort: Largest Size</option>
+    </select>
+    <button class="view" onclick="setView('grid')">▦ Grid</button>
+    <button class="view" onclick="setView('list')">☷ List</button>
+    <button class="view" onclick="showAll()">View all</button>
+  </div>
+</div>
+
+<div id="batchToolbar" class="batch-toolbar">
+  <span id="selectedCountText" style="font-size:14px;font-weight:600">0 selected</span>
+  <button class="mini" data-act="batchtrash">🗑️ Move to Trash</button>
+  <button class="mini" onclick="clearSelection()">✖ Deselect All</button>
+</div>
+
 <section id="files" class="files"></section>
 </div></main></div>
 
-<div id="uploadModal" class="modal"><div class="box">
-<h2>☁️ Upload to Global Cloud</h2>
-<input id="uploaderName" class="form-input" type="text" placeholder="Your Name (Optional)">
-<input id="picker" class="form-input" type="file" multiple onchange="uploadFiles(this.files)">
-<div id="uploadStatus" style="color:var(--accent);margin-top:10px"></div>
-<button class="secondary" style="width:100%;margin-top:15px" onclick="closeUpload()">Close</button>
+<div id="pageView" class="modal">
+<div style="width:100%;min-height:100vh;padding:28px 5%">
+<button class="back-btn" onclick="goBack()">← Back</button>
+<div id="pageContent" style="max-width:1150px;margin:auto"></div>
 </div></div>
 
-<div id="toast" class="toast"></div>
+<div id="passwordModal" class="modal"><div class="box" id="authBox"></div></div>
+
+<div id="uploadModal" class="modal"><div class="box">
+<h2>☁️ Upload Files to Cloud</h2>
+<label for="uploadFolderSelect" style="display:block;margin-top:10px;color:var(--muted);font-size:14px">Destination folder</label>
+<select id="uploadFolderSelect" class="form-select"></select>
+<label for="uploadTagsInput" style="display:block;margin-top:5px;color:var(--muted);font-size:14px">Tags (comma separated, optional)</label>
+<input id="uploadTagsInput" class="form-input" type="text" placeholder="e.g. vacation, family, 2026">
+<div id="drop" class="drop" onclick="document.getElementById('picker').click()">
+  ☁️<br><br><b>Tap to choose files</b><br>or drag and drop them here
+  <button class="upload" type="button" style="margin-top:14px" onclick="event.stopPropagation();document.getElementById('picker').click()">Browse Files</button>
+  <input id="picker" type="file" multiple hidden onchange="addFiles(this.files)">
+</div>
+<div id="uploadQueue"></div>
+<br><button class="view" onclick="closeUpload()">Done</button>
+</div></div>
+
+<div id="folderModal" class="modal"><div class="box">
+<h2>📁 New Folder</h2>
+<input id="newFolderName" class="form-input" type="text" maxlength="40" placeholder="Folder name (e.g. Projects)" onkeydown="if(event.key==='Enter')createFolder()">
+<button class="primary" style="width:100%;margin-bottom:10px" onclick="createFolder()">Create Folder</button>
+<button class="cancel-btn" style="width:100%" onclick="closeFolderModal()">Cancel</button>
+</div></div>
+
+<div id="settingsModal" class="modal"><div class="box">
+<h2>⚙️ Settings</h2>
+<div class="notice">Current mode: <b id="settingsMode">Viewer</b></div>
+<button class="primary" style="width:100%;margin-bottom:10px" onclick="unlockOwner()">🔐 Owner sign-in</button>
+<button class="secondary" style="width:100%;margin-bottom:10px" onclick="lockOwner()">🔒 Lock</button>
+<button class="secondary" style="width:100%;margin-bottom:10px" onclick="changePassword()">🔑 Change passcode</button>
+<button class="secondary" style="width:100%;margin-bottom:10px" onclick="exportDataBackup()">💾 Export file list (JSON)</button>
+<button class="secondary" style="width:100%;margin-bottom:10px" onclick="emptyTrash()">🧹 Empty trash</button>
+<button class="secondary" style="width:100%;margin-bottom:10px" onclick="toggleTheme()">🌗 Switch theme</button>
+<button class="danger" style="width:100%;margin-bottom:6px" onclick="eraseEverything()">⚠️ Erase all data</button>
+<button class="cancel-btn" style="width:100%" onclick="closeSettings()">Close</button>
+</div></div>
+
+<div id="dialogModal" class="modal"><div class="box" id="dialogBox"></div></div>
+<div id="previewModal" class="modal"><div class="box" id="previewBox" style="max-width:750px"></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-// --- SUPABASE CONFIGURATION ---
-const SUPABASE_URL = 'https://lahnustwkknopcfbqwqp.supabase.co';[span_0](start_span)[span_0](end_span)
-const SUPABASE_PUBLISHABLE_KEY = 'Sb_publishable_Q1dDN09bCcYaerXxefwbmA_6Icam4qe';
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+/* ================= SUPABASE CONFIG ================= */
+const SUPABASE_URL = 'https://lahnustwkknopcfbqwqp.supabase.co';
+const SUPABASE_KEY = 'Sb_publishable_Q1dDN09bCcYaerXxefwbmA_6Icam4qe';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+/* ================= helpers ================= */
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-let files = [];
+function lsGet(k,d){try{return localStorage.getItem(k)||d}catch(e){return d}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+const FOLDER_ICONS={Camera:'📸',Videos:'🎥',Memories:'🌅',Documents:'📚'};
+const DEFAULT_FOLDERS=['Camera','Videos','Memories','Documents'];
+const TRASH_DAYS=30,AUTOLOCK_MS=5*60*1000;
+const CLOSABLE=['previewModal','folderModal','settingsModal'];
 
+let DB={files:[],folders:[...DEFAULT_FOLDERS],logs:[],pass:null};
+let S={owner:false,files:[],trash:[],folders:[],logs:[],quota:0,usage:0};
+let thumbURL={},previewURL=null,loaded=false,uploading=false;
+let selected=new Set(),pageHistory=['home'],currentPage='home',query='';
+let viewMode=lsGet('sn_view','grid'),theme=lsGet('sn_theme','dark');
+let afterLogin=null,dialogCloseCb=null,lockTimer=null;
+document.body.classList.toggle('light',theme==='light');
+
+const byId=id=>S.files.find(f=>f.id===id);
+const recOf=id=>DB.files.find(f=>f.id===id);
+const uid=()=>{const a=new Uint8Array(12);crypto.getRandomValues(a);return [...a].map(b=>b.toString(16).padStart(2,'0')).join('')};
+const now=()=>Date.now()/1000;
+const fmtDate=sec=>sec?new Date(sec*1000).toLocaleString():'—';
+function formatBytes(n){
+  n=n||0;
+  if(n<1024)return n+' B';
+  if(n<1048576)return (n/1024).toFixed(1)+' KB';
+  if(n<1073741824)return (n/1048576).toFixed(1)+' MB';
+  return (n/1099511627776).toFixed(2)+' GB';
+}
 function toast(msg){
-  const t=$('toast');t.textContent=msg;t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),2800);
+  const t=$('toast');if(!t)return;
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.classList.remove('show'),2800);
+}
+function needOwner(){if(!S.owner){toast('🔒 Owner sign-in required');return false}return true}
+async function run(fn){try{await fn()}catch(e){toast('⚠️ '+(e&&e.message?e.message:'Something went wrong'))}}
+function cleanName(v){return String(v||'').replace(/[\x00-\x1f\\/]/g,'_').trim().slice(0,200)}
+function guessType(name){
+  const ext=(name.split('.').pop()||'').toLowerCase();
+  const m={jpg:'image/jpeg',jpeg:'image/jpeg',png:'image/png',gif:'image/gif',webp:'image/webp',mp4:'video/mp4',mov:'video/quicktime',mkv:'video/x-matroska',webm:'video/webm',mp3:'audio/mpeg',m4a:'audio/mp4',wav:'audio/wav',pdf:'application/pdf',zip:'application/zip',txt:'text/plain'};
+  return m[ext]||'application/octet-stream';
 }
 
-async function fetchFiles(){
-  const { data, error } = await supabase.from('files').select('*').order('created_at', { ascending: false });
-  if(!error && data) {
-    files = data;
-    render();
-  }
-}
-
-function render(){
-  const q = $('search').value.toLowerCase();
-  const filtered = files.filter(f => f.name.toLowerCase().includes(q));
-  const box = $('files');
-  
-  if(!filtered.length){
-    box.innerHTML = '<div class="empty">No files in cloud yet. Upload one!</div>';
-  } else {
-    box.innerHTML = filtered.map(f => `
-      <article class="file">
-        <div class="thumb">
-          ${f.type && f.type.startsWith('image/') ? `<img src="${f.url}" alt="">` : '<span>📄</span>'}
-        </div>
-        <div class="file-info">
-          <h3>${esc(f.name)}</h3>
-          <p>By: <b>${esc(f.uploader || 'Anonymous')}</b></p>
-          <div class="file-actions">
-            <a class="mini" href="${f.url}" target="_blank" download style="text-decoration:none">⬇️ Download</a>
-            <button class="mini" onclick="deleteFile('${f.id}', '${f.path}')">🗑️ Delete</button>
-          </div>
-        </div>
-      </article>
-    `).join('');
-  }
-  $('fileCount').textContent = files.length;
-}
-
-function openUpload(){ $('uploadModal').classList.add('show'); }
-function closeUpload(){ $('uploadModal').classList.remove('show'); fetchFiles(); }
-
-async function uploadFiles(fileList){
-  const uploader = $('uploaderName').value.trim() || 'Anonymous';
-  const status = $('uploadStatus');
-  status.textContent = 'Uploading to cloud...';
-
-  for(const file of fileList){
-    const filePath = 'public/' + Date.now() + '_' + file.name;
-    const { data: storageData, error: storageError } = await supabase.storage.from('sharenest-files').upload(filePath, file);
-    
-    if(storageError){
-      status.textContent = '❌ Error: ' + storageError.message;
-      return;
+/* ================= cloud sync (Supabase) ================= */
+async function fetchCloudData(){
+  try{
+    const {data, error}=await supabase.from('sharenest_data').select('*').eq('id', 1).single();
+    if(!error && data){
+      DB.files=data.files||[];
+      DB.folders=data.folders||[...DEFAULT_FOLDERS];
+      DB.logs=data.logs||[];
+      DB.pass=data.pass||null;
+    } else {
+      // init cloud record if not exists
+      await supabase.from('sharenest_data').upsert({id:1, files:[], folders:[...DEFAULT_FOLDERS], logs:[], pass:null});
     }
-
-    const { data: { publicUrl } } = supabase.storage.from('sharenest-files').getPublicUrl(filePath);
-
-    await supabase.from('files').insert([{
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      uploader: uploader,
-      url: publicUrl,
-      path: filePath
-    }]);
-  }
-
-  status.textContent = '✅ Uploaded successfully!';
-  toast('Files synced to cloud!');
-  fetchFiles();
+  }catch(e){console.error('Fetch error', e);}
+  loaded=true; await refresh();
 }
 
-async function deleteFile(id, path){
-  const pass = prompt('Enter Owner Passcode (SAMURAIXGOD698):');
-  if(pass === 'SAMURAIXGOD698'){
-    await supabase.storage.from('sharenest-files').remove([path]);
-    await supabase.from('files').delete().eq('id', id);
-    fetchFiles();
-    toast('File deleted');
-  } else if(pass !== null){
-    alert('Incorrect passcode!');
-  }
+async function saveCloudData(){
+  try{
+    await supabase.from('sharenest_data').upsert({
+      id: 1,
+      files: DB.files,
+      folders: DB.folders,
+      logs: DB.logs,
+      pass: DB.pass
+    });
+  }catch(e){console.error('Save error', e);}
 }
 
-// Real-time listener for automatic sync across devices
-supabase.channel('public:files')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'files' }, payload => {
-    fetchFiles();
-  })
-  .subscribe();
+function logAct(text){
+  DB.logs.unshift({t:now(),text});DB.logs=DB.logs.slice(0,100);
+  saveCloudData();
+}
 
-fetchFiles();
+async function updateStorage(){
+  let total=DB.files.reduce((a,f)=>a+(f.size||0),0);
+  $('storageText').textContent=formatBytes(total)+' stored';
+  updateCounts();
+}
+
+/* ================= passcode (local lock) ================= */
+const K=[],H0=[];
+(function(){let n=2,c=0;while(c<64){let p=true;for(let i=2;i*i<=n;i++)if(n%i===0){p=false;break}if(p){if(c<8)H0[c]=(Math.pow(n,.5)%1)*4294967296|0;K[c]=(Math.pow(n,1/3)%1)*4294967296|0;c++}n++}})();
+function sha256(msg){
+  const b=new TextEncoder().encode(msg),l=b.length,w=[];
+  for(let i=0;i<l;i++)w[i>>2]|=b[i]<<(24-8*(i&3));
+  w[l>>2]|=0x80<<(24-8*(l&3));
+  const n=(((l+8)>>6)+1)*16;w[n-1]=l*8;
+  const h=H0.slice(),x=new Array(64);
+  for(let o=0;o<n;o+=16){
+    for(let i=0;i<64;i++){
+      if(i<16)x[i]=w[o+i]|0;
+      else{const a=x[i-15],c=x[i-2];x[i]=(x[i-16]+(((a>>>7)|(a<<25))^((a>>>18)|(a<<14))^(a>>>3))+x[i-7]+(((c>>>17)|(c<<15))^((c>>>19)|(c<<13))^(c>>>10)))|0}
+    }
+    let a=h[0],b2=h[1],c=h[2],d=h[3],e=h[4],f=h[5],g=h[6],hh=h[7];
+    for(let i=0;i<64;i++){
+      const t1=(hh+(((e>>>6)|(e<<26))^((e>>>11)|(e<<21))^((e>>>25)|(e<<7)))+((e&f)^(~e&g))+K[i]+x[i])|0;
+      const t2=((((a>>>2)|(a<<30))^((a>>>13)|(a<<19))^((a>>>22)|(a<<10)))+((a&b2)^(a&c)^(b2&c)))|0;
+      hh=g;g=f;f=e;e=(d+t1)|0;d=c;c=b2;b2=a;a=(t1+t2)|0;
+    }
+    h[0]=(h[0]+a)|0;h[1]=(h[1]+b2)|0;h[2]=(h[2]+c)|0;h[3]=(h[3]+d)|0;h[4]=(h[4]+e)|0;h[5]=(h[5]+f)|0;h[6]=(h[6]+g)|0;h[7]=(h[7]+hh)|0;
+  }
+  return h.map(v=>(v>>>0).toString(16).padStart(8,'0')).join('');
+}
+const hex=u8=>[...u8].map(b=>b.toString(16).padStart(2,'0')).join('');
+const unhex=s=>new Uint8Array(s.match(/../g).map(h=>parseInt(h,16)));
+const randHex=n=>{const a=new Uint8Array(n);crypto.getRandomValues(a);return hex(a)};
+async function derive(secret,saltHex,alg){
+  if(alg==='pbkdf2'&&window.crypto&&crypto.subtle){
+    const key=await crypto.subtle.importKey('raw',new TextEncoder().encode(secret),'PBKDF2',false,['deriveBits']);
+    const bits=await crypto.subtle.deriveBits({name:'PBKDF2',hash:'SHA-256',salt:unhex(saltHex),iterations:150000},key,256);
+    return hex(new Uint8Array(bits));
+  }
+  let h=sha256(saltHex+secret);
+  for(let i=0;i<20000;i++)h=sha256(h+saltHex);
+  return h;
+}
+const normRec=s=>String(s||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+function genRecovery(){
+  const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(16);crypto.getRandomValues(a);
+  const s=[...a].map(v=>chars[v%chars.length]).join('');
+  return s.match(/.{4}/g).join('-');
+}
+async function makePass(pw,rec){
+  const alg=(window.crypto&&crypto.subtle)?'pbkdf2':'sha',salt=randHex(16),rsalt=randHex(16);
+  return {alg,salt,hash:await derive(pw,salt,alg),rsalt,rhash:await derive(normRec(rec),rsalt,alg)};
+}
+const sameHash=(a,b)=>a.length===b.length&&[...a].every((c,i)=>c===b[i]);
+
+function authError(msg){const p=$('passwordError');if(!p)return;p.textContent='❌ '+msg;p.style.display='block'}
+function showPassword(mode){
+  mode=mode||(DB.pass?'login':'setup');
+  const pw=(id,ph,ac)=>'<input id="'+id+'" class="form-input" type="password" placeholder="'+ph+'" autocomplete="'+ac+'">';
+  let h='';
+  if(mode==='setup'){
+    h='<div class="password-icon">🔐</div><h2 style="text-align:center">Create your passcode</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">This passcode unlocks uploads and management on this cloud.</p>'+
+      pw('pwNew','New passcode (min 6 characters)','new-password')+pw('pwNew2','Repeat passcode','new-password')+
+      '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dosetup">Create passcode</button>';
+  }else if(mode==='recover'){
+    h='<div class="password-icon">🛟</div><h2 style="text-align:center">Reset with recovery code</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">Enter recovery code to reset passcode.</p>'+
+      '<input id="recCode" class="form-input" type="text" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters">'+pw('pwNew','New passcode (min 6 characters)','new-password')+
+      '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dorecover">Reset passcode</button>';
+  }else{
+    h='<div class="password-icon">🔐</div><h2 style="text-align:center">Owner sign-in</h2><p style="color:var(--muted);text-align:center;margin-bottom:18px">Enter passcode to upload and manage files.</p>'+
+      '<input id="uploadPassword" class="form-input" type="password" placeholder="Passcode" autocomplete="current-password" onkeydown="if(event.key===\'Enter\')checkOwnerPassword()">'+
+      '<div id="passwordError" class="password-error"></div><button class="primary" style="width:100%" data-act="dologin">🔓 Unlock</button>'+
+      '<button class="cancel-btn" style="width:100%;margin-top:10px" data-act="forgot">Forgot passcode?</button>';
+  }
+  h+='<button class="cancel-btn" style="width:100%" onclick="closePassword()">Cancel</button>';
+  $('authBox').innerHTML=h;$('passwordModal').classList.add('show');
+  setTimeout(()=>{const f=$('uploadPassword')||$('pwNew')||$('recCode');if(f)f.focus()},100);
+}
+function closePassword(){$('passwordModal').classList.remove('show');$('authBox').innerHTML=''}
+async function unlockNow(){
+  S.owner=true;resetAutoLock();logAct('Owner unlocked');await refresh();
+}
+async function doSetup(){
+  const a=$('pwNew').value,b=$('pwNew2').value;
+  if(a.length<6)return authError('Passcode must be at least 6 characters');
+  if(a!==b)return authError('Passcodes do not match');
+  const rec=genRecovery();
+  DB.pass=await makePass(a,rec);await saveCloudData();
+  closePassword();await unlockNow();showRecovery(rec);
+}
+async function doRecover(){
+  const code=$('recCode').value,a=$('pwNew').value;
+  if(a.length<6)return authError('New passcode must be at least 6 characters');
+  const h=await derive(normRec(code),DB.pass.rsalt,DB.pass.alg);
+  if(!sameHash(h,DB.pass.rhash))return authError('Recovery code is incorrect');
+  const rec=genRecovery();
+  DB.pass=await makePass(a,rec);await saveCloudData();
+  closePassword();await unlockNow();showRecovery(rec);
+}
+async function checkOwnerPassword(){
+  const until=+lsGet('sn_lockuntil','0');
+  if(until>Date.now())return authError('Too many attempts. Try again in '+Math.ceil((until-Date.now())/60000)+' min.');
+  const inp=$('uploadPassword'),pw=inp.value;
+  if(!pw)return;
+  const h=await derive(pw,DB.pass.salt,DB.pass.alg);
+  if(sameHash(h,DB.pass.hash)){
+    lsSet('sn_fails','0');closePassword();await unlockNow();toast('👑 Signed in');
+    const cb=afterLogin;afterLogin=null;if(cb)cb();
+  }else{
+    const f=(+lsGet('sn_fails','0'))+1;lsSet('sn_fails',String(f));
+    if(f>=5){lsSet('sn_lockuntil',String(Date.now()+5*60000));lsSet('sn_fails','0');authError('Too many attempts. Locked for 5 minutes.')}
+    else authError('Incorrect passcode');
+    inp.value='';inp.focus();
+  }
+}
+function showRecovery(code){
+  dialogCloseCb=afterLogin;afterLogin=null;
+  openDialog('<h2>🛟 Save your recovery code</h2><p style="color:var(--muted)">If you forget your passcode, this code is the only way to reset it. Save it safely:</p><div class="code">'+esc(code)+'</div>'+
+    '<button class="primary" style="width:100%" onclick="closeDialog()">I saved it</button>');
+}
+function openUpload(){
+  if(!DB.pass){showPassword('setup');return;}
+  if(!S.owner){afterLogin=openUploadModal;showPassword('login');return}
+  openUploadModal();
+}
+function unlockOwner(){closeSettings();afterLogin=null;showPassword('login')}
+function resetAutoLock(){clearTimeout(lockTimer);if(S.owner)lockTimer=setTimeout(()=>doLock(true),AUTOLOCK_MS)}
+function closeAllModals(){
+  ['uploadModal','folderModal','settingsModal','previewModal','dialogModal','passwordModal'].forEach(id=>$(id).classList.remove('show'));
+  closePreviewMedia();closeMenu();
+}
+async function doLock(auto){
+  clearTimeout(lockTimer);
+  if(S.owner)logAct(auto?'Auto-locked after inactivity':'Locked');
+  S.owner=false;selected.clear();closeAllModals();await refresh();
+  toast(auto?'🔒 Auto-locked after 5 minutes':'🔒 Locked');
+}
+function lockOwner(){doLock(false)}
+function changePassword(){
+  if(!needOwner())return;
+  closeSettings();
+  openDialog('<h2>🔑 Change passcode</h2>'+
+    '<input id="cpOld" class="form-input" type="password" placeholder="Current passcode" autocomplete="current-password">'+
+    '<input id="cpNew" class="form-input" type="password" placeholder="New passcode (min 6 characters)" autocomplete="new-password">'+
+    '<input id="cpNew2" class="form-input" type="password" placeholder="Repeat new passcode" autocomplete="new-password">'+
+    '<button class="primary" style="width:100%" data-act="dochpw">Save passcode</button>'+
+    '<button class="cancel-btn" style="width:100%" onclick="closeDialog()">Cancel</button>');
+}
+async function doChangePassword(){
+  const o=$('cpOld').value,n=$('cpNew').value,n2=$('cpNew2').value;
+  const h=await derive(o,DB.pass.salt,DB.pass.alg);
+  if(!sameHash(h,DB.pass.hash)){toast('❌ Current passcode is incorrect');return}
+  if(n.length<6){toast('❌ New passcode must be at least 6 characters');return}
+  if(n!==n2){toast('❌ New passcodes do not match');return}
+  const salt=randHex(16);
+  DB.pass=Object.assign({},DB.pass,{salt,hash:await derive(n,salt,DB.pass.alg)});
+  await saveCloudData();logAct('Passcode changed');
+  closeDialog();toast('🔑 Passcode updated');
+}
+
+/* ================= state + rendering ================= */
+function sync(){
+  const act=DB.files.filter(f=>!f.trashed_at);
+  S.files=S.owner?act:act.filter(f=>f.public);
+  S.trash=S.owner?DB.files.filter(f=>f.trashed_at):[];
+  S.folders=DB.folders;
+  S.logs=S.owner?DB.logs:[];
+}
+async function refresh(){
+  sync();
+  const ids=new Set(S.files.map(f=>f.id));
+  selected=new Set([...selected].filter(i=>ids.has(i)));
+  updateMode();render();
+  if(currentPage!=='home')showPage(currentPage);
+  updateStorage();
+}
+function sortList(list){
+  const by=$('sortSelect')?$('sortSelect').value:'newest';
+  return [...list].sort((a,b)=>{
+    if(by==='oldest')return (a.uploaded_at||0)-(b.uploaded_at||0);
+    if(by==='name')return a.name.localeCompare(b.name);
+    if(by==='size')return (b.size||0)-(a.size||0);
+    return (b.uploaded_at||0)-(a.uploaded_at||0);
+  });
+}
+function visibleList(){
+  const q=query.trim().toLowerCase();
+  if(!q)return S.files;
+  return S.files.filter(f=>(f.name+' '+(f.folder||'')+' '+(f.tags||[]).join(' ')).toLowerCase().includes(q));
+}
+function render(){
+  const box=$('files');if(!box)return;
+  const list=sortList(visibleList());
+  box.className='files '+viewMode;
+  if(!loaded)box.innerHTML='<div class="empty">Loading cloud…</div>';
+  else if(!list.length)box.innerHTML='<div class="empty">'+(query?'No files match your search.':'No files in cloud yet. Tap “Upload Files” to add one.')+'</div>';
+  else box.innerHTML=list.map(fileCard).join('');
+  renderFolders();updateCounts();updateBatch();
+}
+function iconFor(f){
+  const t=f.type||'';
+  if(t.startsWith('audio/'))return '🎵';
+  if(t.startsWith('video/'))return '🎬';
+  if(t.startsWith('image/'))return '🖼️';
+  if(t==='application/pdf')return '📕';
+  return '📄';
+}
+function thumbHtml(f){
+  if(f.url && f.type && f.type.startsWith('image/')) return '<img loading="lazy" alt="" src="'+f.url+'">';
+  return '<span>'+iconFor(f)+'</span>';
+}
+function fileCard(f){
+  const id=f.id;
+  const tags=f.tags&&f.tags.length?'<div class="tags">Tags: '+esc(f.tags.join(', '))+'</div>':'';
+  return '<article class="file">'+
+    (S.owner?'<input type="checkbox" class="file-checkbox" aria-label="Select file" data-act="select" data-id="'+id+'"'+(selected.has(id)?' checked':'')+'>':'')+
+    '<div class="thumb" data-act="preview" data-id="'+id+'">'+thumbHtml(f)+'<button class="more" aria-label="File options" data-act="menu" data-id="'+id+'">⋮</button></div>'+
+    '<div class="file-info">'+
+      '<h3 data-act="preview" data-id="'+id+'">'+esc(f.name)+'</h3>'+
+      '<p>'+formatBytes(f.size)+' • '+(f.public?'🌐 Public':'🔒 Private')+'</p>'+tags+
+      '<div class="file-bottom"><span>'+esc(f.folder||'Files')+'</span><button class="star '+(f.star?'on':'')+'" aria-label="Favorite" data-act="star" data-id="'+id+'">'+(f.star?'★':'☆')+'</button></div>'+
+      '<div class="file-actions">'+
+        '<a class="mini" href="'+f.url+'" target="_blank" download style="text-decoration:none">⬇️ Download</a>'+
+        '<button class="mini" data-act="share" data-id="'+id+'">📤 Share</button>'+
+        '<button class="mini" data-act="info" data-id="'+id+'">ℹ️ Info</button>'+
+      '</div>'+
+    '</div></article>';
+}
+function folderCard(name){
+  const n=S.files.filter(x=>x.folder===name).length;
+  const manage=S.owner?'<span class="fmanage"><button class="mini" title="Rename folder" aria-label="Rename folder" data-act="renfolder" data-folder="'+esc(name)+'">✏️</button><button class="mini" title="Delete folder" aria-label="Delete folder" data-act="delfolder" data-folder="'+esc(name)+'">🗑️</button></span>':'';
+  return '<div class="folder" data-act="folder" data-folder="'+esc(name)+'"><div class="folder-icon">'+(FOLDER_ICONS[name]||'📁')+'</div><div style="flex:1;min-width:0"><h3>'+esc(name)+'</h3><small>'+n+' items</small></div>'+manage+'</div>';
+}
+function renderFolders(){
+  const fc=$('foldersContainer');if(fc) fc.innerHTML=S.folders.length?S.folders.map(folderCard).join(''):'<div class="empty">No folders.</div>';
+}
+function updateCounts(){
+  const isT=p=>f=>(f.type||'').startsWith(p);
+  const imgs=S.files.filter(isT('image/')),vids=S.files.filter(isT('video/')),auds=S.files.filter(isT('audio/'));
+  const sum=l=>l.reduce((a,f)=>a+(f.size||0),0);
+  if($('photoCount')) $('photoCount').textContent=imgs.length;
+  if($('videoCount')) $('videoCount').textContent=vids.length;
+  if($('audioCount')) $('audioCount').textContent=auds.length;
+  const active=sum(S.files),trashB=sum(S.trash);
+  if($('anImages')) $('anImages').textContent=formatBytes(sum(imgs));
+  if($('anVideos')) $('anVideos').textContent=formatBytes(sum(vids));
+  if($('anOthers')) $('anOthers').textContent=formatBytes(Math.max(0,active-sum(imgs)-sum(vids)));
+  if($('anTrash')) $('anTrash').textContent=formatBytes(trashB);
+}
+function updateMode(){
+  if($('modeBadge')) $('modeBadge').textContent=S.owner?'👑 Owner':'👤 Viewer Mode';
+  if($('settingsMode')) $('settingsMode').textContent=S.owner?'Owner':'Viewer';
+}
+function searchFiles(){query=$('search').value;render()}
+function setView(v){viewMode=v;lsSet('sn_view',v);render();if(currentPage!=='home')showPage(currentPage);toast(v==='grid'?'▦ Grid view':'☷ List view')}
+function toggleTheme(){
+  theme=theme==='dark'?'light':'dark';
+  document.body.classList.toggle('light',theme==='light');
+  lsSet('sn_theme',theme);toast('🌗 Theme changed');
+}
+
+/* ================= selection ================= */
+function toggleSelect(id,checked){if(checked)selected.add(id);else selected.delete(id);updateBatch()}
+function updateBatch(){
+  const tb=$('batchToolbar');if(!tb)return;
+  if(S.owner&&selected.size>0){tb.classList.add('show');$('selectedCountText').textContent=selected.size+' selected'}
+  else tb.classList.remove('show');
+}
+function clearSelection(){selected.clear();render();if(currentPage!=='home')showPage(currentPage)}
+async function trashIds(ids){
+  const recs=ids.map(recOf).filter(r=>r&&!r.trashed_at);
+  recs.forEach(r=>{r.trashed_at=now()});
+  await saveCloudData();logAct('Moved '+recs.length+' file(s) to Trash');
+}
+async function batchTrash(){
+  if(!needOwner()||!selected.size)return;
+  if(!confirm('Move '+selected.size+' file(s) to Trash?'))return;
+  const ids=[...selected];selected.clear();
+  await trashIds(ids);await refresh();toast('🗑️ Moved to Trash');
+}
+
+/* ================= settings ================= */
+function openSettings(){$('settingsModal').classList.add('show');updateMode();}
+function closeSettings(){$('settingsModal').classList.remove('show')}
+function exportDataBackup(){
+  if(!needOwner())return;
+  const data={exported_at:now(),folders:DB.folders,files:DB.files,logs:DB.logs};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sharenest_backup_'+Date.now()+'.json';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+  toast('💾 Backup exported');
+}
+async function eraseEverything(){
+  if(!needOwner())return;
+  if(!confirm('Erase ALL files, folders, logs and passcode from the cloud?'))return;
+  DB.files=[];DB.folders=[...DEFAULT_FOLDERS];DB.logs=[];DB.pass=null;
+  await saveCloudData();
+  location.reload();
+}
+
+/* ================= upload ================= */
+function openUploadModal(){
+  $('uploadFolderSelect').innerHTML=DB.folders.map(f=>'<option value="'+esc(f)+'">'+esc(f)+'</option>').join('');
+  if(!uploading)$('uploadQueue').innerHTML='';
+  $('uploadModal').classList.add('show');
+}
+function closeUpload(){$('uploadModal').classList.remove('show')}
+
+async function addFiles(fileList){
+  if(!needOwner())return;
+  const filesArr=[...fileList];
+  if(!filesArr.length)return;
+  if(uploading){toast('⏳ Upload already running');return}
+  uploading=true;
+  const folder=$('uploadFolderSelect').value||DB.folders[0];
+  const tags=$('uploadTagsInput').value.split(',').map(t=>t.trim().slice(0,30)).filter(Boolean).slice(0,10);
+  const q=$('uploadQueue');
+  let ok=0;
+
+  for(const file of filesArr){
+    const row=document.createElement('div');row.className='uprow';
+    row.innerHTML='<div class="upname">'+esc(file.name)+'</div><div class="progress ind"><div style="width:0%"></div></div><small class="upstat">Uploading to cloud…</small>';
+    q.appendChild(row);
+    const bar=row.querySelector('.progress'),stat=row.querySelector('.upstat');
+
+    try{
+      const filePath='public/'+Date.now()+'_'+file.name;
+      const {error:stErr}=await supabase.storage.from('sharenest-files').upload(filePath, file);
+      if(stErr) throw new Error(stErr.message);
+
+      const {data:{publicUrl}}=supabase.storage.from('sharenest-files').getPublicUrl(filePath);
+
+      const rec={
+        id:uid(),
+        name:cleanName(file.name)||'file',
+        size:file.size,
+        type:file.type||guessType(file.name),
+        folder,tags,
+        star:false,
+        public:true,
+        url:publicUrl,
+        path:filePath,
+        uploaded_at:now(),
+        trashed_at:null
+      };
+
+      DB.files.unshift(rec);
+      await saveCloudData();
+      bar.classList.remove('ind');bar.firstChild.style.width='100%';stat.textContent='✅ Saved';ok++;
+      logAct('Uploaded file: '+rec.name);
+    }catch(e){
+      bar.classList.remove('ind');stat.textContent='❌ '+(e.message||'Upload failed');stat.classList.add('bad');
+    }
+  }
+  uploading=false;$('picker').value='';
+  await refresh();
+  if(ok) toast('✅ '+ok+' file(s) uploaded successfully');
+}
+
+/* ================= file actions ================= */
+async function shareFile(id){
+  const f=byId(id);if(!f)return;
+  if(navigator.share){
+    try{await navigator.share({title:f.name,url:f.url})}catch(e){}
+  }else{
+    prompt('Copy file link:', f.url);
+  }
+}
+function closePreviewMedia(){
+  const pb=$('previewBox');if(pb)pb.innerHTML='';
+}
+function closePreview(){$('previewModal').classList.remove('show');closePreviewMedia()}
+async function previewFile(id){
+  const f=byId(id);if(!f)return;
+  const t=f.type||'';let c;
+  closePreviewMedia();
+  if(t.startsWith('image/')) c='<img src="'+f.url+'" alt="">';
+  else if(t.startsWith('video/')) c='<video controls autoplay playsinline src="'+f.url+'"></video>';
+  else if(t.startsWith('audio/')) c='<audio controls autoplay style="width:100%" src="'+f.url+'"></audio>';
+  else c='<div style="padding:40px;font-size:45px">'+iconFor(f)+'<p style="font-size:16px;color:var(--muted);margin-top:14px">No direct preview.</p></div>';
+  
+  $('previewBox').innerHTML='<h2>👁️ '+esc(f.name)+'</h2><div class="preview-container">'+c+'</div><button class="secondary" style="width:100%;margin-top:16px" onclick="closePreview()">Close</button>';
+  $('previewModal').classList.add('show');
+}
+async function toggleStar(id){
+  if(!needOwner())return;
+  const f=recOf(id);if(!f)return;
+  f.star=!f.star;await saveCloudData();await refresh();
+  toast(f.star?'⭐ Starred':'☆ Unstarred');
+}
+async function renameFile(id){
+  if(!needOwner())return;
+  const f=recOf(id);if(!f)return;
+  const n=cleanName(prompt('New file name:',f.name));
+  if(!n||n===f.name)return;
+  f.name=n;await saveCloudData();await refresh();toast('✏️ Renamed');
+}
+function moveFile(id){
+  if(!needOwner())return;
+  const f=recOf(id);if(!f)return;
+  openDialog('<h2>📂 Move to folder</h2><div class="notice"><b>'+esc(f.name)+'</b></div>'+
+    '<select id="moveSel" class="form-select">'+DB.folders.map(x=>'<option value="'+esc(x)+'"'+(x===f.folder?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'+
+    '<button class="primary" style="width:100%" data-act="domove" data-id="'+id+'">Move</button>'+
+    '<button class="cancel-btn" style="width:100%" onclick="closeDialog()">Cancel</button>');
+}
+async function doMove(id){
+  const f=recOf(id),to=$('moveSel').value;
+  if(!f||!DB.folders.includes(to))return;
+  f.folder=to;await saveCloudData();closeDialog();await refresh();toast('📂 Moved');
+}
+async function deleteFile(id){
+  if(!needOwner())return;
+  const f=recOf(id);if(!f)return;
+  if(!confirm('Move “'+f.name+'” to Trash?'))return;
+  f.trashed_at=now();await saveCloudData();await refresh();toast('🗑️ Moved to Trash');
+}
+async function restoreFile(id){
+  if(!needOwner())return;
+  const f=recOf(id);if(!f)return;
+  f.trashed_at=null;await saveCloudData();await refresh();toast('↩️ Restored');
+}
+async function destroyFile(id){
+  if(!needOwner())return;
+  const f=recOf(id);if(!f||!f.trashed_at)return;
+  if(!confirm('Permanently delete file?'))return;
+  try{if(f.path)await supabase.storage.from('sharenest-files').remove([f.path]);}catch(e){}
+  DB.files=DB.files.filter(x=>x.id!==id);
+  await saveCloudData();await refresh();toast('🗑️ Deleted permanently');
+}
+async function emptyTrash(){
+  if(!needOwner())return;
+  const trashItems=DB.files.filter(f=>f.trashed_at);
+  if(!trashItems.length){toast('Trash empty');return}
+  if(!confirm('Empty trash permanently?'))return;
+  for(const f of trashItems){
+    if(f.path) try{await supabase.storage.from('sharenest-files').remove([f.path]);}catch(e){}
+  }
+  DB.files=DB.files.filter(f=>!f.trashed_at);
+  await saveCloudData();closeSettings();await refresh();toast('🧹 Trash emptied');
+}
+function details(id){
+  const f=byId(id);if(!f)return;
+  openDialog('<h2>ℹ️ File details</h2><div class="notice"><b>'+esc(f.name)+'</b><br><br>Type: '+esc(f.type||'Unknown')+'<br>Size: '+formatBytes(f.size)+'<br>Folder: '+esc(f.folder||'—')+'<br>Uploaded: '+esc(fmtDate(f.uploaded_at))+'</div>'+
+    '<button class="secondary" style="width:100%" onclick="closeDialog()">Close</button>');
+}
+
+/* ================= folders ================= */
+function openCreateFolderModal(){
+  if(!needOwner())return;
+  $('newFolderName').value='';$('folderModal').classList.add('show');
+  setTimeout(()=>$('newFolderName').focus(),100);
+}
+function closeFolderModal(){$('folderModal').classList.remove('show')}
+async function createFolder(){
+  const n=String($('newFolderName').value||'').trim();
+  if(!n||DB.folders.includes(n)){toast('Invalid or existing folder');return;}
+  DB.folders.push(n);await saveCloudData();closeFolderModal();await refresh();toast('📁 Folder created');
+}
+async function renameFolder(name){
+  if(!needOwner())return;
+  const n=prompt('New folder name:',name);
+  if(!n||DB.folders.includes(n))return;
+  DB.folders[DB.folders.indexOf(name)]=n;
+  DB.files.forEach(f=>{if(f.folder===name)f.folder=n;});
+  await saveCloudData();await refresh();toast('✏️ Folder renamed');
+}
+async function deleteFolder(name){
+  if(!needOwner())return;
+  if(DB.folders.length<2){toast('Keep at least one folder');return;}
+  DB.folders=DB.folders.filter(x=>x!==name);
+  await saveCloudData();await refresh();toast('🗑️ Folder deleted');
+}
+
+/* ================= pages ================= */
+function makeCards(list){
+  if(!list.length)return '<div class="empty">📁<br><br>Nothing here.</div>';
+  return '<div class="files '+viewMode+'">'+sortList(list).map(fileCard).join('')+'</div>';
+}
+function ownerOnlyNotice(){return '<div class="empty">🔒<br><br>Sign in as owner to view.</div>'}
+function makeTrashCards(){
+  if(!S.trash.length)return '<div class="empty">🗑️<br><br>Trash is empty.</div>';
+  return '<div class="row-actions" style="margin-bottom:18px"><button class="secondary" data-act="emptytrash">🧹 Empty trash</button></div>'+
+    '<div class="files '+viewMode+'">'+S.trash.map(f=>'<article class="file"><div class="thumb">'+thumbHtml(f)+'</div><div class="file-info"><h3>'+esc(f.name)+'</h3><div class="file-actions"><button class="mini" data-act="restore" data-id="'+f.id+'">↩ Restore</button><button class="mini" data-act="destroy" data-id="'+f.id+'">❌ Delete</button></div></div></article>').join('')+'</div>';
+}
+function makeActivity(){
+  if(!S.logs.length)return '<div class="empty">📋<br><br>No activity.</div>';
+  return '<div style="display:flex;flex-direction:column;gap:10px">'+S.logs.map(l=>'<div class="notice" style="margin:0"><b>'+esc(fmtDate(l.t))+'</b><br>'+esc(l.text)+'</div>').join('')+'</div>';
+}
+function showPage(page){
+  currentPage=page;$('pageView').classList.add('show');
+  const isT=p=>f=>(f.type||'').startsWith(p);
+  let title='',sub='',body='';
+  if(page==='photos'){title='🖼️ Photos';sub='Images';body=makeCards(S.files.filter(isT('image/')))}
+  else if(page==='videos'){title='🎬 Videos';sub='Videos';body=makeCards(S.files.filter(isT('video/')))}
+  else if(page==='audio'){title='🎵 Audio';sub='Audio';body=makeCards(S.files.filter(isT('audio/')))}
+  else if(page==='folders'){title='📁 Folders';sub='Collections';body='<div class="folders">'+DB.folders.map(folderCard).join('')+'</div>'}
+  else if(page==='favorites'){title='⭐ Favorites';sub='Starred';body=makeCards(S.files.filter(f=>f.star))}
+  else if(page==='recent'){title='🕘 Recent';sub='All files';body=makeCards(S.files)}
+  else if(page==='trash'){title='🗑️ Trash';sub='Deleted files';body=S.owner?makeTrashCards():ownerOnlyNotice()}
+  else if(page==='activity'){title='📋 Activity';sub='Logs';body=S.owner?makeActivity():ownerOnlyNotice()}
+  else if(page.startsWith('folder:')){const name=page.slice(7);title='📁 '+esc(name);body=makeCards(S.files.filter(f=>f.folder===name))}
+  $('pageContent').innerHTML='<h1>'+title+'</h1><p class="subtitle">'+sub+'</p><div style="margin-top:30px">'+body+'</div>';
+}
+function navigate(page,button){
+  document.querySelectorAll('.side').forEach(b=>b.classList.remove('active'));
+  if(button)button.classList.add('active');
+  if(page==='home'){closePage();pageHistory=['home'];window.scrollTo({top:0,behavior:'smooth'});return}
+  if(pageHistory[pageHistory.length-1]!==page)pageHistory.push(page);
+  showPage(page);
+}
+function openFolder(name){const p='folder:'+name;pageHistory.push(p);showPage(p)}
+function goBack(){
+  if(pageHistory.length>1)pageHistory.pop();
+  const p=pageHistory[pageHistory.length-1]||'home';
+  if(p==='home'){closePage();document.querySelectorAll('.side').forEach(b=>b.classList.remove('active'));document.querySelector('[data-page="home"]').classList.add('active');}else showPage(p);
+}
+function closePage(){currentPage='home';$('pageView').classList.remove('show');$('pageContent').innerHTML=''}
+function showAll(){$('search').value='';query='';render();navigate('recent')}
+
+/* ================= dialogs & menu ================= */
+function openDialog(html){$('dialogBox').innerHTML=html;$('dialogModal').classList.add('show')}
+function closeDialog(){$('dialogModal').classList.remove('show');$('dialogBox').innerHTML='';}
+function closeMenu(){const m=$('fileMenu');if(m)m.remove()}
+function fileMenu(id,btn){
+  closeMenu();const f=byId(id);if(!f)return;
+  const items=[['preview','👁️ Preview'],['share','📤 Share']];
+  if(S.owner)items.push(['rename','✏️ Rename'],['move','📂 Move'],['star',f.star?'☆ Unstar':'⭐ Star']);
+  items.push(['info','ℹ️ Details']);
+  if(S.owner)items.push(['delete','🗑️ Trash']);
+  const m=document.createElement('div');m.id='fileMenu';m.className='menu';
+  m.innerHTML=items.map(i=>'<button data-act="'+i[0]+'" data-id="'+id+'">'+i[1]+'</button>').join('');
+  document.body.appendChild(m);
+  const r=btn.getBoundingClientRect();
+  m.style.left=Math.max(8,r.right-200)+'px';m.style.top=(r.bottom+6)+'px';
+}
+
+const ACTIONS={
+  preview:id=>previewFile(id),
+  menu:(id,el)=>fileMenu(id,el),
+  share:id=>shareFile(id),
+  info:id=>details(id),
+  star:id=>toggleStar(id),
+  rename:id=>renameFile(id),
+  move:id=>moveFile(id),
+  domove:id=>doMove(id),
+  delete:id=>deleteFile(id),
+  restore:id=>restoreFile(id),
+  destroy:id=>destroyFile(id),
+  emptytrash:()=>emptyTrash(),
+  select:(id,el)=>toggleSelect(id,el.checked),
+  batchtrash:()=>batchTrash(),
+  folder:(id,el)=>openFolder(el.dataset.folder),
+  renfolder:(id,el)=>renameFolder(el.dataset.folder),
+  delfolder:(id,el)=>deleteFolder(el.dataset.folder),
+  dochpw:()=>doChangePassword(),
+  dosetup:()=>doSetup(),
+  dorecover:()=>doRecover(),
+  dologin:()=>checkOwnerPassword(),
+  forgot:()=>showPassword('recover'),
+  closepreview:()=>closePreview()
+};
+
+document.addEventListener('click',e=>{
+  if(S.owner)resetAutoLock();
+  const el=e.target.closest('[data-act]');
+  const inMenu=e.target.closest('#fileMenu');
+  if(!inMenu&&!(el&&el.dataset.act==='menu'))closeMenu();
+  if(el){
+    const fn=ACTIONS[el.dataset.act];
+    if(fn)run(()=>fn(el.dataset.id,el));
+    if(inMenu)closeMenu();
+  }
+  const t=e.target;
+  if(t.classList&&t.classList.contains('modal')){
+    if(t.id==='dialogModal')closeDialog();
+    else if(t.id==='previewModal')closePreview();
+    else if(CLOSABLE.includes(t.id))t.classList.remove('show');
+  }
+});
+
+// Real-time synchronization subscription
+try{
+  supabase.channel('public:sharenest_data')
+    .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'sharenest_data' }, payload => {
+      if(payload.new){
+        DB.files=payload.new.files||[];
+        DB.folders=payload.new.folders||[...DEFAULT_FOLDERS];
+        DB.logs=payload.new.logs||[];
+        DB.pass=payload.new.pass||null;
+        refresh();
+      }
+    })
+    .subscribe();
+}catch(e){}
+
+// Initialize Cloud App
+fetchCloudData();
 </script>
 </body>
 </html>
