@@ -112,13 +112,13 @@ h1{font-size:34px}
 </div>
 
 <section class="hero">
-<h2>Storage overview 🔐</h2>
+<h2>Storage overview (5 TB Limit) 🔐</h2>
 <p>Upload, organize, preview and share your files from one place.</p>
 <div class="stats">
 <div class="stat">🖼️ <b id="photoCount">0</b> Photos</div>
 <div class="stat">🎬 <b id="videoCount">0</b> Videos</div>
 <div class="stat">🎵 <b id="audioCount">0</b> Audio</div>
-<div class="stat">💾 <b id="storageText">0 B</b></div>
+<div class="stat">💾 <b id="storageText">0 B / 5 TB</b></div>
 </div>
 <div class="progress"><div id="storageBar" style="width:0%"></div></div>
 
@@ -223,7 +223,7 @@ const TRASH_DAYS=30,AUTOLOCK_MS=5*60*1000;
 const CLOSABLE=['previewModal','folderModal','settingsModal'];
 
 let DB={files:[],folders:[],logs:[]};
-let S={owner:false,files:[],trash:[],folders:[],logs:[],quota:0,usage:0};
+let S={owner:false,files:[],trash:[],folders:[],logs:[],quota:5*1024*1024*1024*1024,usage:0}; // 5 TB quota enforced
 let idb=null,thumbURL={},previewURL=null,loaded=false,uploading=false;
 let selected=new Set(),pageHistory=['home'],currentPage='home',query='';
 let viewMode=lsGet('sn_view','grid'),theme=lsGet('sn_theme','dark');
@@ -242,7 +242,8 @@ function formatBytes(n){
   if(n<1024)return n+' B';
   if(n<1048576)return (n/1024).toFixed(1)+' KB';
   if(n<1073741824)return (n/1048576).toFixed(1)+' MB';
-  return (n/1073741824).toFixed(2)+' GB';
+  if(n<1099511627776)return (n/1073741824).toFixed(2)+' GB';
+  return (n/1099511627776).toFixed(2)+' TB';
 }
 function toast(msg){
   const t=$('toast');t.textContent=msg;t.classList.add('show');
@@ -289,7 +290,7 @@ async function purgeTrash(){
   if(old.length){await deleteForever(old);logAct('Auto-deleted '+old.length+' file(s) from Trash')}
 }
 async function updateStorage(){
-  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();S.usage=e.usage||0;S.quota=e.quota||0}}catch(e){}
+  try{if(navigator.storage&&navigator.storage.estimate){const e=await navigator.storage.estimate();S.usage=e.usage||0;}}catch(e){}
   updateCounts();
 }
 
@@ -460,8 +461,9 @@ function updateCounts(){
   const sum=l=>l.reduce((a,f)=>a+(f.size||0),0);
   $('photoCount').textContent=imgs.length;$('videoCount').textContent=vids.length;$('audioCount').textContent=auds.length;
   const active=sum(S.files),trashB=sum(S.trash),total=active+trashB;
-  $('storageText').textContent=formatBytes(total)+' stored'+(S.quota?' • '+formatBytes(Math.max(0,S.quota-S.usage))+' free':'');
-  $('storageBar').style.width=S.quota?Math.min(100,S.usage/S.quota*100)+'%':'0%';
+  const freeTB=formatBytes(Math.max(0,S.quota-total));
+  $('storageText').textContent=formatBytes(total)+' stored • '+freeTB+' free (5 TB Limit)';
+  $('storageBar').style.width=Math.min(100,(total/S.quota)*100)+'%';
   $('anImages').textContent=formatBytes(sum(imgs));
   $('anVideos').textContent=formatBytes(sum(vids));
   $('anOthers').textContent=formatBytes(Math.max(0,active-sum(imgs)-sum(vids)));
