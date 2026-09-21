@@ -195,7 +195,7 @@ h1{font-size:42px;letter-spacing:-1.5px}.subtitle{color:var(--muted);margin-top:
 <script>
 /* ================= SUPABASE CONFIG ================= */
 const SUPABASE_URL = 'https://lahnustwkknopcfbqwqp.supabase.co';
-const SUPABASE_KEY = 'Sb_publishable_Q1dDN09bCcYaerXxefwbmA_6Icam4qe'; // ⚠️ verify exact casing in Supabase dashboard (usually starts with lowercase "sb_publishable_")
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhaG51c3R3a2tub3BjZmJxd3FwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk5NzY3NjMsImV4cCI6MjEwNTU1Mjc2M30.DTkQ07QM-GrWP3dRoDti13VomDNBUvHnGDUf4YFBQXs'; // anon public key (safe for browser; never use service_role here)
 let sb = null;
 try{
   sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -732,4 +732,3 @@ fetchCloudData();
 </script>
 </body>
 </html>
-
